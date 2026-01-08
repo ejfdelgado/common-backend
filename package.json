@@ -1,0 +1,35 @@
+{
+  "name": "common-backend",
+  "version": "1.8.16",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "scripts": {
+    "bip": "ffplay /sound/finish.mp3 -nodisp -nostats -hide_banner -autoexit",
+    "build": "tsc",
+    "dev": "nodemon src/server.ts",
+    "clean": "rm -rf dist",
+    "build_docker": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/eficiencia-energetica-427815/cotel/cotel_backend:$npm_package_version -f Dockerfile . && npm run bip",
+    "publish": "docker push us-central1-docker.pkg.dev/eficiencia-energetica-427815/cotel/cotel_backend:$npm_package_version && npm run bip"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.17.2",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.2.0",
+    "moment": "^2.30.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.19.11",
+    "dotenv": "^17.2.3",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}
