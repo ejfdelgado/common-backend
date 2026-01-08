@@ -1,4 +1,4 @@
-import express, { Response, } from 'express';
+import { Response } from 'express';
 import { Storage } from "@google-cloud/storage";
 import { AuthenticatedRequest } from '../types';
 import { General } from '../tools/General';

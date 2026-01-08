@@ -7,6 +7,7 @@ import { BucketsSrv } from "./services/bucket";
 import { ApiResponse, AuthenticatedRequest } from './types';
 import { createGoogleJwtMiddleware } from './middleware/authGoogle';
 import multer from 'multer';
+import { FileSrv } from './services/file';
 
 const allowedOrigins = [
     'http://localhost:4200',
@@ -76,6 +77,10 @@ class App {
         this.app.post('/bucket/file', upload.single('file'), asyncHandler(BucketsSrv.saveFile));
         this.app.get('/bucket/file', asyncHandler(BucketsSrv.readFile));
         this.app.get('/public/bucket/file', asyncHandler(BucketsSrv.readFile));
+
+        this.app.post('/harddrive/file', upload.single('file'), asyncHandler(FileSrv.saveFile));
+        this.app.get('/harddrive/file', asyncHandler(FileSrv.readFile));
+        this.app.get('/public/harddrive/file', asyncHandler(FileSrv.readFile));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
