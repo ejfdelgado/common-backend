@@ -6,27 +6,62 @@ const storage = new Storage();
 
 export class BucketsSrv {
 
-    static async loadFile(req: AuthenticatedRequest, res: Response) {
-        const { pdf_bucket_name, pdf_file_name } = req.body;
+    static async saveFile(req: AuthenticatedRequest, res: Response) {
+        let { bucket_name, file_path } = req.body;
+        const file = req.file;
 
-        try {
-            const bucketRef = storage.bucket(pdf_bucket_name);
-            const file = bucketRef.file(pdf_file_name);
-
-            // Get file metadata for content type
-            const [metadata] = await file.getMetadata();
-
-            res.status(200).setHeader("Content-Type", metadata.contentType || "application/octet-stream");
-            res.setHeader("Content-Disposition", `inline; filename="${pdf_file_name.split('/').pop()}"`);
-
-            // Pipe the read stream to the response
-            file.createReadStream().pipe(res).on("error", (err) => {
-                console.error(err);
-                res.status(500).send("Error leyendo el archivo.");
-            });
-        } catch (err) {
-            console.error(err);
-            res.status(500).send("Error leyendo el archivo");
+        if (!bucket_name) {
+            // Use the default
+            bucket_name=process.env.BUCKET_NAME;
         }
+
+        if (!bucket_name || !file_path || !file) {
+            return res.status(400).json({ error: 'bucket, path and file are required' });
+        }
+
+        const bucketRef = storage.bucket(bucket_name);
+        const gcsFile = bucketRef.file(file_path);
+
+        const stream = gcsFile.createWriteStream({
+            resumable: false,
+            contentType: file.mimetype ? file.mimetype : "application/octet-stream",
+            metadata: {
+                cacheControl: 'public, max-age=31536000',
+            },
+        });
+
+        stream.on('error', (err) => {
+            console.error(err);
+            res.status(500).json({ error: 'Upload failed' });
+        });
+
+        stream.on('finish', async () => {
+            res.status(200).json({
+                message: 'Upload successful',
+                bucket_name,
+                file_path,
+            });
+        });
+
+        stream.end(file.buffer);
+    }
+
+    static async readFile(req: AuthenticatedRequest, res: Response) {
+        const { bucket_name, file_path } = req.body;
+
+        const bucketRef = storage.bucket(bucket_name);
+        const file = bucketRef.file(file_path);
+
+        // Get file metadata for content type
+        const [metadata] = await file.getMetadata();
+
+        res.status(200).setHeader("Content-Type", metadata.contentType || "application/octet-stream");
+        res.setHeader("Content-Disposition", `inline; filename="${file_path.split('/').pop()}"`);
+
+        // Pipe the read stream to the response
+        file.createReadStream().pipe(res).on("error", (err) => {
+            console.error(err);
+            res.status(500).send("Error leyendo el archivo.");
+        });
     }
 }

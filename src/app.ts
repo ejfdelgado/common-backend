@@ -6,11 +6,14 @@ import { asyncHandler } from "./tools/General";
 import { BucketsSrv } from "./services/bucket";
 import { ApiResponse, AuthenticatedRequest } from './types';
 import { createGoogleJwtMiddleware } from './middleware/authGoogle';
+import multer from 'multer';
 
 const allowedOrigins = [
     'http://localhost:4200',
     'https://localhost:4200',
 ];
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 if (process.env.CORS_MAIN_ALLOWED_ORIGIN) {
     allowedOrigins.push(...process.env.CORS_MAIN_ALLOWED_ORIGIN.split(","));
@@ -70,7 +73,7 @@ class App {
         this.app.post('/public/echo', HealthSrv.echo);
         this.app.get('/check_user', HealthSrv.checkUser);
         // Bucket files
-        this.app.post('/bucket/file', asyncHandler(BucketsSrv.loadFile));
+        this.app.post('/bucket/file', upload.single('file'), asyncHandler(BucketsSrv.saveFile));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
