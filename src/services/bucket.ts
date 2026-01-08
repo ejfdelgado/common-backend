@@ -7,12 +7,12 @@ const storage = new Storage();
 export class BucketsSrv {
 
     static async saveFile(req: AuthenticatedRequest, res: Response) {
-        let { bucket_name, file_path } = req.body;
+        let { bucket_name, file_path, make_public } = req.body;
         const file = req.file;
 
         if (!bucket_name) {
             // Use the default
-            bucket_name=process.env.BUCKET_NAME;
+            bucket_name = process.env.BUCKET_NAME;
         }
 
         if (!bucket_name || !file_path || !file) {
@@ -36,6 +36,9 @@ export class BucketsSrv {
         });
 
         stream.on('finish', async () => {
+            if (make_public === "1") {
+                await gcsFile.makePublic();
+            }
             res.status(200).json({
                 message: 'Upload successful',
                 bucket_name,

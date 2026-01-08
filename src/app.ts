@@ -72,8 +72,9 @@ class App {
         this.app.get('/public/health', HealthSrv.health);
         this.app.post('/public/echo', HealthSrv.echo);
         this.app.get('/check_user', HealthSrv.checkUser);
-        // Bucket files
+
         this.app.post('/bucket/file', upload.single('file'), asyncHandler(BucketsSrv.saveFile));
+        this.app.get('/bucket/file', asyncHandler(BucketsSrv.readFile));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
