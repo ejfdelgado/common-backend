@@ -9,6 +9,7 @@ import { createGoogleJwtMiddleware } from './middleware/authGoogle';
 
 const allowedOrigins = [
     'http://localhost:4200',
+    'https://localhost:4200',
 ];
 
 if (process.env.CORS_MAIN_ALLOWED_ORIGIN) {

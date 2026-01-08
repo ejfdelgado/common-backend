@@ -201,7 +201,7 @@ export function createGoogleJwtMiddleware(options: any = {}) {
 
                 // Fallback to tokeninfo endpoint
                 try {
-                    decoded = await verifyViaTokenInfo(token, "access_token");
+                    decoded = await verifyViaTokenInfo(token, "id_token");
                     verificationMethod = 'tokeninfo';
                 } catch (tokeninfoError: any) {
                     // Combine errors
