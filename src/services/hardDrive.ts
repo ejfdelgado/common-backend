@@ -4,7 +4,7 @@ import { Response } from 'express';
 import fs from "fs";
 import path from 'path';
 
-export class FileSrv {
+export class HardDriveSrv {
     static async createSubfoldersForFile(filePath: string) {
         // Extract directory path from file path
         const dirPath = path.dirname(filePath);
@@ -30,7 +30,7 @@ export class FileSrv {
         }
         const folder = process.env.LOCAL_FOLDER ? process.env.LOCAL_FOLDER : "/tmp";
         const filePath = path.join(folder, file_path);
-        await FileSrv.createSubfoldersForFile(filePath);
+        await HardDriveSrv.createSubfoldersForFile(filePath);
         const stream = fs.createWriteStream(filePath);
         stream.on('error', (err) => {
             console.error(err);
