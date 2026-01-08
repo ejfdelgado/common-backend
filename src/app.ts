@@ -75,6 +75,7 @@ class App {
 
         this.app.post('/bucket/file', upload.single('file'), asyncHandler(BucketsSrv.saveFile));
         this.app.get('/bucket/file', asyncHandler(BucketsSrv.readFile));
+        this.app.get('/public/bucket/file', asyncHandler(BucketsSrv.readFile));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {

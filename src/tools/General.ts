@@ -1,3 +1,4 @@
+import { SimpleObj } from 'ejfdelgado-common-ts';
 import { ParametrosIncompletosException } from '../errors';
 import express, { Request, Response, NextFunction } from "express";
 
@@ -13,10 +14,7 @@ export class General {
 
     static readParam(req: Request, name: string, pred: any = null, complain: boolean = false) {
         const nameLower = name.toLowerCase();
-        let first = undefined;
-        if (req.body) {
-            req.body[name];
-        }
+        const first = SimpleObj.getValue(req.body, name, undefined);
         if (first !== undefined) {
             return first;
         } else if (req.query && name in req.query) {
