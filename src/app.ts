@@ -76,10 +76,12 @@ class App {
 
         this.app.post('/bucket/file', upload.single('file'), asyncHandler(BucketsSrv.saveFile));
         this.app.get('/bucket/file', asyncHandler(BucketsSrv.readFile));
+        this.app.delete('/bucket/file', asyncHandler(BucketsSrv.deleteFile));
         this.app.get('/public/bucket/file', asyncHandler(BucketsSrv.readFile));
 
         this.app.post('/harddrive/file', upload.single('file'), asyncHandler(HardDriveSrv.saveFile));
         this.app.get('/harddrive/file', asyncHandler(HardDriveSrv.readFile));
+        this.app.delete('/harddrive/file', asyncHandler(HardDriveSrv.deleteFile));
         this.app.get('/public/harddrive/file', asyncHandler(HardDriveSrv.readFile));
 
         this.app.use('*', (req: Request, res: Response) => {

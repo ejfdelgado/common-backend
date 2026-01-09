@@ -1,4 +1,4 @@
-import { AuthenticatedRequest } from '../types';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 import { General } from '../tools/General';
 import { Response } from 'express';
 import fs from "fs";
@@ -82,5 +82,27 @@ export class HardDriveSrv {
             console.error(err);
             res.status(500).send("Error leyendo el archivo.");
         });
+    }
+
+    static async deleteFile(req: AuthenticatedRequest, res: Response) {
+        let bucket_name: string | undefined = General.readParam(req, "bucket_name", undefined, false);
+        const file_path: string = General.readParam(req, "file_path", undefined, false);
+
+        if (!bucket_name) {
+            bucket_name = process.env.BUCKET_NAME;
+        }
+
+        if (!bucket_name || !file_path) {
+            return res.status(400).json({ error: 'bucket_name and file_path are required' });
+        }
+
+        if (!(await HardDriveSrv.fileExists(file_path))) {
+            return res.status(204).json({ error: 'file not found' });
+        }
+
+        fs.unlinkSync(file_path);
+
+        const response: ApiResponse = { message: "ok", success: true, timestamp: new Date(), };
+        return res.status(200).json(response);
     }
 }

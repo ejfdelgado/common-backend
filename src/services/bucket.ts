@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { Storage } from "@google-cloud/storage";
-import { AuthenticatedRequest } from '../types';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 import { General } from '../tools/General';
 
 const storage = new Storage();
@@ -56,6 +56,29 @@ export class BucketsSrv {
         const file = storage.bucket(bucketName).file(filePath);
         const [exists] = await file.exists();
         return exists;
+    }
+
+    static async deleteFile(req: AuthenticatedRequest, res: Response) {
+        let bucket_name: string | undefined = General.readParam(req, "bucket_name", undefined, false);
+        const file_path: string = General.readParam(req, "file_path", undefined, false);
+
+        if (!bucket_name) {
+            bucket_name = process.env.BUCKET_NAME;
+        }
+
+        if (!bucket_name || !file_path) {
+            return res.status(400).json({ error: 'bucket_name and file_path are required' });
+        }
+        const file = storage.bucket(bucket_name).file(file_path);
+
+        if (!(await BucketsSrv.fileExists(bucket_name, file_path))) {
+            return res.status(204).json({ error: 'file not found' });
+        }
+
+        await file.delete();
+
+        const response: ApiResponse = { message: "ok", success: true, timestamp: new Date(), };
+        return res.status(200).json(response);
     }
 
     static async readFile(req: AuthenticatedRequest, res: Response) {
