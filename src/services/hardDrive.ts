@@ -85,22 +85,20 @@ export class HardDriveSrv {
     }
 
     static async deleteFile(req: AuthenticatedRequest, res: Response) {
-        let bucket_name: string | undefined = General.readParam(req, "bucket_name", undefined, false);
         const file_path: string = General.readParam(req, "file_path", undefined, false);
 
-        if (!bucket_name) {
-            bucket_name = process.env.BUCKET_NAME;
+        if (!file_path) {
+            return res.status(400).json({ error: 'file_path are required' });
         }
 
-        if (!bucket_name || !file_path) {
-            return res.status(400).json({ error: 'bucket_name and file_path are required' });
-        }
+        const folder = process.env.LOCAL_FOLDER ? process.env.LOCAL_FOLDER : "/tmp";
+        const filePath = path.join(folder, file_path);
 
-        if (!(await HardDriveSrv.fileExists(file_path))) {
+        if (!(await HardDriveSrv.fileExists(filePath))) {
             return res.status(204).json({ error: 'file not found' });
         }
 
-        fs.unlinkSync(file_path);
+        fs.unlinkSync(filePath);
 
         const response: ApiResponse = { message: "ok", success: true, timestamp: new Date(), };
         return res.status(200).json(response);
