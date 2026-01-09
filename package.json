@@ -1,6 +1,6 @@
 {
   "name": "common-backend",
-  "version": "1.8.16",
+  "version": "1.0.0",
   "main": "index.js",
   "author": "",
   "license": "ISC",
@@ -10,8 +10,9 @@
     "build": "tsc",
     "dev": "nodemon src/server.ts",
     "clean": "rm -rf dist",
-    "build_docker": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/eficiencia-energetica-427815/cotel/cotel_backend:$npm_package_version -f Dockerfile . && npm run bip",
-    "publish": "docker push us-central1-docker.pkg.dev/eficiencia-energetica-427815/cotel/cotel_backend:$npm_package_version && npm run bip"
+    "build_docker": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f Dockerfile . && npm run bip",
+    "auth": "gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev",
+    "publish": "npm run auth && docker push us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version && npm run bip"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.2",
