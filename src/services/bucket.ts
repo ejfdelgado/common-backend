@@ -52,9 +52,16 @@ export class BucketsSrv {
         stream.end(file.buffer);
     }
 
+    static async fileExists(bucketName: string, filePath: string) {
+        const file = storage.bucket(bucketName).file(filePath);
+        const [exists] = await file.exists();
+        return exists;
+    }
+
     static async readFile(req: AuthenticatedRequest, res: Response) {
         let bucket_name: string | undefined = General.readParam(req, "bucket_name", undefined, false);
-        let file_path: string = General.readParam(req, "file_path", undefined, false);
+        const file_path: string = General.readParam(req, "file_path", undefined, false);
+        const inline: string = General.readParam(req, "inline", "1", false);
 
         if (!bucket_name) {
             bucket_name = process.env.BUCKET_NAME;
@@ -64,6 +71,10 @@ export class BucketsSrv {
             return res.status(400).json({ error: 'bucket_name and file_path are required' });
         }
 
+        if (!(await BucketsSrv.fileExists(bucket_name, file_path))) {
+            return res.status(204).json({ error: 'file not found' });
+        }
+
         const bucketRef = storage.bucket(bucket_name);
         const file = bucketRef.file(file_path);
 
@@ -71,7 +82,9 @@ export class BucketsSrv {
         const [metadata] = await file.getMetadata();
 
         res.status(200).setHeader("Content-Type", metadata.contentType || "application/octet-stream");
-        res.setHeader("Content-Disposition", `inline; filename="${file_path.split('/').pop()}"`);
+        if (inline == "1") {
+            res.setHeader("Content-Disposition", `inline; filename="${file_path.split('/').pop()}"`);
+        }
 
         // Pipe the read stream to the response
         file.createReadStream().pipe(res).on("error", (err) => {
