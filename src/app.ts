@@ -17,7 +17,7 @@ const allowedOrigins = [
 const upload = multer({ storage: multer.memoryStorage() });
 
 if (process.env.CORS_MAIN_ALLOWED_ORIGIN) {
-    allowedOrigins.push(...process.env.CORS_MAIN_ALLOWED_ORIGIN.split(","));
+    allowedOrigins.push(...process.env.CORS_MAIN_ALLOWED_ORIGIN.split(/[, ]/));
 }
 
 class App {
@@ -35,7 +35,7 @@ class App {
 
     private initializeMiddlewares(): void {
         this.app.use(cors({
-            methods: ["GET", "POST", "DELETE"],
+            methods: ["GET", "POST", "DELETE", "PUT"],
             origin: (origin, callback) => {
                 // allow requests with no origin (like mobile apps or curl)
                 if (!origin || allowedOrigins.includes(origin)) {
