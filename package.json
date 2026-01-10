@@ -17,10 +17,11 @@
     "publish_nogales": "npm run auth && npm run rename_nogales && docker push us-central1-docker.pkg.dev/local-volt-431316-m2/nogales/common_backend:$npm_package_version && npm run bip"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^8.1.0",
     "@google-cloud/storage": "^7.17.2",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
-    "ejfdelgado-common-ts": "^1.0.4",
+    "ejfdelgado-common-ts": "^1.1.0",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
