@@ -89,6 +89,7 @@ class App {
         this.app.get('/public/mysql/check', asyncHandler(MySQLSrv.check));
 
         this.app.post('/public/firestore', asyncHandler(FirestoreWeb.createUpdate));
+        this.app.post('/firestore', asyncHandler(FirestoreWeb.createUpdate));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {

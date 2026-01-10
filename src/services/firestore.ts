@@ -172,6 +172,18 @@ export class MyStore {
         });
         return data;
     }
+
+    static async exist(collection: string, id: string) {
+        const collectionReference = firestore.collection(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}`);
+        const snap = await collectionReference
+            .doc(id)
+            .get();
+        if (!snap.exists) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 }
 
 
