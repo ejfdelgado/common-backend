@@ -1,16 +1,5 @@
-
-import { Firestore, OrderByDirection } from '@google-cloud/firestore'
-
-export interface OrderType {
-    name: string;
-    dir: OrderByDirection;
-};
-
-export interface WhereType {
-    key: string;
-    oper: string;
-    value: string;
-};
+import { Firestore } from '@google-cloud/firestore'
+import { FirestoreOrderType, FirestoreWhereType } from 'ejfdelgado-common-ts';
 
 const firestore = new Firestore();
 firestore.settings({
@@ -140,7 +129,15 @@ export class MyStore {
         }
     }
 
-    static async paginate(collection: string, orderColumns: OrderType[], offset = 0, pageSize = 20, where: WhereType[] = [], firestoreInstance: any = null, select = []) {
+    static async paginate(
+        collection: string,
+        orderColumns: FirestoreOrderType[],
+        offset = 0,
+        pageSize = 20,
+        where: FirestoreWhereType[] = [],
+        firestoreInstance: any = null,
+        select: string[] = [],
+    ) {
         const collectionReference = firestore.collection(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}`);
         let theQuery: any = collectionReference;
         for (let i = 0; i < orderColumns.length; i++) {
