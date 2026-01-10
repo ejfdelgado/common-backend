@@ -8,6 +8,7 @@ import { ApiResponse, AuthenticatedRequest } from './types';
 import { createGoogleJwtMiddleware } from './middleware/authGoogle';
 import multer from 'multer';
 import { HardDriveSrv } from './services/hardDrive';
+import { MySQLSrv } from './services/mysql';
 
 const allowedOrigins = [
     'http://localhost:4200',
@@ -83,6 +84,8 @@ class App {
         this.app.get('/harddrive/file', asyncHandler(HardDriveSrv.readFile));
         this.app.delete('/harddrive/file', asyncHandler(HardDriveSrv.deleteFile));
         this.app.get('/public/harddrive/file', asyncHandler(HardDriveSrv.readFile));
+
+        this.app.get('/public/mysql/check', asyncHandler(MySQLSrv.check));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
