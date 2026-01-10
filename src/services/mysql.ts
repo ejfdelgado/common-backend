@@ -1,5 +1,5 @@
 import { ApiResponse, AuthenticatedRequest } from "../types";
-import { createPool, Pool } from "mysql2/promise";
+import { createPool, Pool, PoolOptions } from "mysql2/promise";
 import { Response } from 'express';
 import { General } from "../tools/General";
 
@@ -7,16 +7,22 @@ export class MySQLSrv {
     static pool: Pool | null = null;
     static getPool(): Pool {
         if (MySQLSrv.pool == null) {
-            MySQLSrv.pool = createPool({
-                host: process.env.MYSQL_HOST,
-                //port: process.env.MYSQL_PORT,//not needed
+            const config: PoolOptions = {
                 user: process.env.MYSQL_USER,
                 password: process.env.MYSQL_PASS,
                 database: process.env.MYSQL_DB,
                 waitForConnections: true,
                 connectionLimit: 10,
                 queueLimit: 0
-            });
+            };
+
+            if (process.env.DB_SOCKET) {
+                config.socketPath = process.env.DB_SOCKET;
+            } else {
+                config.host = process.env.MYSQL_HOST;
+                config.port = parseInt(process.env.MYSQL_PORT ? process.env.MYSQL_PORT : "3306");
+            }
+            MySQLSrv.pool = createPool(config);
         }
         return MySQLSrv.pool;
     }
