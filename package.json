@@ -12,7 +12,9 @@
     "clean": "rm -rf dist",
     "build_docker": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f Dockerfile . && npm run bip",
     "auth": "gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev",
-    "publish": "npm run auth && docker push us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version && npm run bip"
+    "publish": "npm run auth && docker push us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version && npm run bip",
+    "rename_nogales": "docker tag us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version us-central1-docker.pkg.dev/local-volt-431316-m2/nogales/common_backend:$npm_package_version",
+    "publish_nogales": "npm run auth && npm run rename_nogales && docker push us-central1-docker.pkg.dev/local-volt-431316-m2/nogales/common_backend:$npm_package_version && npm run bip"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.2",
