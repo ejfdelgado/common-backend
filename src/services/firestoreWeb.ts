@@ -13,37 +13,43 @@ export class FirestoreWeb {
         const now = Date.now();
         const collection = General.readParam(req, "collection", undefined, true);
         const data: any = General.readParam(req, "data", undefined, true);
-
-        let principal: string | undefined = undefined;
-        if (req.user?.email) {
-            principal = req.user?.email;
-        }
+        const conf: any = General.readParam(req, "conf", undefined, true);
 
         delete data.created;
         delete data.author;
 
         let id: string | undefined = data.id;
         let dbResponse: any = null;
+
+        function autoCreation() {
+            data.created = now;
+            data.updated = now;
+            if (req.user?.email) {
+                data.author = req.user?.email;
+                if (conf?.autoAuthor) {
+                    if (req.user?.picture) {
+                        data.author_picture = req.user?.picture
+                    }
+                    if (req.user?.name) {
+                        data.author_name = req.user?.name
+                    }
+                }
+            }
+
+        };
+
         if (typeof id == "string") {
             // Maybe a creation
             const exists = await MyStore.exist(collection, id);
             if (!exists) {
-                data.created = now;
-                data.updated = now;
-                if (principal) {
-                    data.author = principal;
-                }
+                autoCreation();
             } else {
                 data.updated = now;
             }
             dbResponse = await MyStore.updateOrCreateById(collection, id, data);
         } else {
             // Sure a creation
-            data.created = now;
-            data.updated = now;
-            if (principal) {
-                data.author = principal;
-            }
+            autoCreation();
             dbResponse = await MyStore.create(collection, data);
             id = dbResponse.id;
         }
