@@ -9,6 +9,7 @@ import { createGoogleJwtMiddleware } from './middleware/authGoogle';
 import multer from 'multer';
 import { HardDriveSrv } from './services/hardDrive';
 import { MySQLSrv } from './services/mysql';
+import { FirestoreWeb } from './services/firestoreWeb';
 
 const allowedOrigins = [
     'http://localhost:4200',
@@ -86,6 +87,8 @@ class App {
         this.app.get('/public/harddrive/file', asyncHandler(HardDriveSrv.readFile));
 
         this.app.get('/public/mysql/check', asyncHandler(MySQLSrv.check));
+
+        this.app.post('/public/firestore', asyncHandler(FirestoreWeb.createUpdate));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
