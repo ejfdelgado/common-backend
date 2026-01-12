@@ -5,7 +5,7 @@ import { HealthSrv } from "./services/health";
 import { asyncHandler } from "./tools/General";
 import { BucketsSrv } from "./services/bucket";
 import { ApiResponse, AuthenticatedRequest } from './types';
-import { createGoogleJwtMiddleware } from './middleware/authGoogle';
+import { createGoogleJwtMiddleware, requestTokenId } from './middleware/authGoogle';
 import multer from 'multer';
 import { HardDriveSrv } from './services/hardDrive';
 import { MySQLSrv } from './services/mysql';
@@ -90,6 +90,8 @@ class App {
 
         this.app.post('/public/firestore', asyncHandler(FirestoreWeb.createUpdate));
         this.app.post('/firestore', asyncHandler(FirestoreWeb.createUpdate));
+
+        this.app.post('/public/auth/google', asyncHandler(requestTokenId));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {

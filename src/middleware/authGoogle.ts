@@ -1,8 +1,40 @@
-import { Response, NextFunction } from "express";
+import { Response, Request, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
 import { AuthenticatedRequest } from "../types";
 import axios from "axios";
+import { General } from "../tools/General";
+
+export async function requestTokenId(req: Request, res: Response) {
+    let code: string | undefined = General.readParam(req, "code", undefined, false);
+    //let scope: string | undefined = General.readParam(req, "scope", undefined, false);
+    let redirect_uri: string | undefined = General.readParam(req, "redirect_uri", undefined, false);
+    const params: any = {
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirect_uri,
+        grant_type: 'authorization_code',
+    };
+    const tokenResponse = await axios.post(
+        'https://oauth2.googleapis.com/token',
+        new URLSearchParams(params),
+        {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        }
+    );
+
+    const {
+        id_token,
+        access_token,
+        refresh_token
+    } = tokenResponse.data;
+    return res.status(200).json({
+        id_token,
+        access_token,
+        refresh_token,
+    });
+}
 
 /**
  * Google OAuth JWT Middleware for Express
