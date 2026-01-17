@@ -58,4 +58,16 @@ export class FirestoreWeb {
 
         res.status(200).json(response);
     }
+
+    static async delete(req: AuthenticatedRequest, res: Response) {
+        const response: ApiResponse = {
+            success: true,
+            message: '',
+            timestamp: new Date()
+        };
+        const collection = General.readParam(req, "collection", undefined, true);
+        const id = General.readParam(req, "id", undefined, true);
+        await MyStore.deleteById(collection, id);
+        res.status(200).json(response);
+    }
 }

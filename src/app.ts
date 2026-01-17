@@ -90,6 +90,7 @@ class App {
 
         this.app.post('/public/firestore', asyncHandler(FirestoreWeb.createUpdate));
         this.app.post('/firestore', asyncHandler(FirestoreWeb.createUpdate));
+        this.app.delete('/firestore', asyncHandler(FirestoreWeb.delete));
 
         this.app.post('/public/auth/google', asyncHandler(requestTokenId));
 
