@@ -1,5 +1,5 @@
 import { Response, Request, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt, { JwtPayload, TokenExpiredError } from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
 import { AuthenticatedRequest } from "../types";
 import axios from "axios";
@@ -107,7 +107,8 @@ export function createGoogleJwtMiddleware(options: any = {}) {
             audience: audiences,
             issuer: validIssuers,
             clockTolerance: 30,
-            complete: true // Get full token with header
+            complete: true,
+            ignoreExpiration: process.env.check_token_expiration !== "1",
         };
         return new Promise((resolve, reject) => {
             jwt.verify(
@@ -149,9 +150,11 @@ export function createGoogleJwtMiddleware(options: any = {}) {
             }
 
             // Validate expiration
-            const now = Math.floor(Date.now() / 1000);
-            if (parseInt(payload.exp) < now) {
-                throw new Error('Token expired');
+            if (process.env.check_token_expiration == "1") {
+                const now = Math.floor(Date.now() / 1000);
+                if (parseInt(payload.exp) < now) {
+                    throw new Error('Token expired');
+                }
             }
 
             return {

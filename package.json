@@ -1,6 +1,6 @@
 {
   "name": "common-backend",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "main": "index.js",
   "author": "",
   "license": "ISC",
@@ -12,10 +12,12 @@
     "dev": "npm run define_project && nodemon src/server.ts",
     "clean": "rm -rf dist",
     "build_docker": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f Dockerfile . && npm run bip",
+    "build_docker_fast": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f DockerfileFast . && npm run bip",
     "auth": "gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev",
     "publish": "npm run auth && docker push us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version && npm run bip",
     "rename_nogales": "docker tag us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version us-central1-docker.pkg.dev/local-volt-431316-m2/nogales/common_backend:$npm_package_version",
-    "publish_nogales": "npm run auth && npm run rename_nogales && docker push us-central1-docker.pkg.dev/local-volt-431316-m2/nogales/common_backend:$npm_package_version && npm run bip"
+    "publish_nogales": "npm run auth && npm run rename_nogales && docker push us-central1-docker.pkg.dev/local-volt-431316-m2/nogales/common_backend:$npm_package_version && npm run bip",
+    "run_docker": "docker run us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version"
   },
   "dependencies": {
     "@google-cloud/firestore": "^8.1.0",
