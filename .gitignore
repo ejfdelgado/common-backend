@@ -43,3 +43,5 @@ Thumbs.db
 rundevlx.sh
 
 src/database/
+
+credentials/
