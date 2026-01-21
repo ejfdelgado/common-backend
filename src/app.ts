@@ -5,11 +5,11 @@ import { HealthSrv } from "./services/health";
 import { asyncHandler } from "./tools/General";
 import { BucketsSrv } from "./services/bucket";
 import { ApiResponse, AuthenticatedRequest } from './types';
-import { createGoogleJwtMiddleware, requestTokenId } from './middleware/authGoogle';
 import multer from 'multer';
 import { HardDriveSrv } from './services/hardDrive';
 import { MySQLSrv } from './services/mysql';
 import { FirestoreWeb } from './services/firestoreWeb';
+import { firebaseAuthMiddleware } from './middleware/firebase-auth.middleware';
 
 const allowedOrigins = [
     'http://localhost:4200',
@@ -51,17 +51,7 @@ class App {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
 
-        const googleJwtMiddleware = createGoogleJwtMiddleware({
-            clientId: process.env.GOOGLE_CLIENT_ID, // Required
-            allowedAudiences: [].filter(Boolean),
-            credentialsRequired: true,
-            ignorePaths: ['/public',],
-            cacheMaxAge: 3600000, // 1 hour cache
-            cache: true
-        });
-
-        // Apply middleware globally
-        this.app.use(googleJwtMiddleware);
+        this.app.use(firebaseAuthMiddleware);
 
         // Logging middleware
         this.app.use((req: Request, res: Response, next: NextFunction) => {
@@ -91,8 +81,6 @@ class App {
         this.app.post('/public/firestore', asyncHandler(FirestoreWeb.createUpdate));
         this.app.post('/firestore', asyncHandler(FirestoreWeb.createUpdate));
         this.app.delete('/firestore', asyncHandler(FirestoreWeb.delete));
-
-        this.app.post('/public/auth/google', asyncHandler(requestTokenId));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {

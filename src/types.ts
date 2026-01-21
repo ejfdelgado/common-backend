@@ -1,5 +1,6 @@
 import { JwtPayload } from "jsonwebtoken";
 import { Request } from "express";
+import { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
 
 export interface ApiResponse {
     success: boolean;
@@ -8,19 +9,13 @@ export interface ApiResponse {
     timestamp: Date;
 }
 
-export interface AuthenticatedUser {
-    id: string;
-    email: string;
-    emailVerified?: boolean;
-    name: string;
-    picture?: string;
-    locale?: string;
-    hd?: string // Google Workspace domain
+export interface AuthenticatedUser extends DecodedIdToken {
+
 }
 
 export interface AuthenticatedRequest extends Request {
     token?: string;
     tokenPayload?: JwtPayload;
     tokenVerificationMethod?: string;
-    user?: AuthenticatedUser;
+    user?: AuthenticatedUser | null;
 }
