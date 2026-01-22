@@ -24,7 +24,7 @@
     "@google-cloud/storage": "^7.17.2",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
-    "ejfdelgado-common-ts": "^1.1.3",
+    "ejfdelgado-common-ts": "^1.1.4",
     "express": "^4.21.2",
     "firebase-admin": "^13.6.0",
     "jsonwebtoken": "^9.0.2",
