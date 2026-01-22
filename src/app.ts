@@ -10,6 +10,7 @@ import { HardDriveSrv } from './services/hardDrive';
 import { MySQLSrv } from './services/mysql';
 import { FirestoreWeb } from './services/firestoreWeb';
 import { firebaseAuthMiddleware } from './middleware/firebase-auth.middleware';
+import { TemplatesSrv } from './services/templates';
 
 const allowedOrigins = [
     'http://localhost:4200',
@@ -81,6 +82,10 @@ class App {
         this.app.post('/public/firestore', asyncHandler(FirestoreWeb.createUpdate));
         this.app.post('/firestore', asyncHandler(FirestoreWeb.createUpdate));
         this.app.delete('/firestore', asyncHandler(FirestoreWeb.delete));
+
+        this.app.get('/social', asyncHandler(TemplatesSrv.socialShare));
+
+
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
