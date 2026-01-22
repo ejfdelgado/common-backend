@@ -1,13 +1,13 @@
 {
   "name": "common-backend",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "main": "index.js",
   "author": "",
   "license": "ISC",
   "description": "",
   "scripts": {
     "bip": "ffplay /sound/finish.mp3 -nodisp -nostats -hide_banner -autoexit",
-    "build": "tsc",
+    "build": "tsc && cp -r src/assets dist/",
     "define_project": "gcloud config set project ejfexperiments",
     "dev": "npm run define_project && nodemon src/server.ts",
     "clean": "rm -rf dist",
