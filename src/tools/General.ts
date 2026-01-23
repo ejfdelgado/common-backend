@@ -16,6 +16,12 @@ export function getThumbnailPath(value: string) {
     });
 }
 
+export function getSquarePath(value: string) {
+    return value.replace(/\.[a-z\?=\d]+$/ig, (extension: string) => {
+        return "_square" + extension;
+    });
+}
+
 export function getBucketFilePath(value: string | null) {
     if (value != null && value.length > 0) {
         return `https://storage.googleapis.com/${process.env.BUCKET_NAME}/${value}`;

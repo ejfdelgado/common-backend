@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ApiResponse, AuthenticatedRequest } from '../types';
-import { escapeHtml, General, getBucketFilePath, getThumbnailPath } from '../tools/General';
+import { escapeHtml, General, getBucketFilePath, getSquarePath, getThumbnailPath } from '../tools/General';
 import { MyStore } from './firestore';
 import { MyTemplate } from 'ejfdelgado-common-ts';
 import fs from 'fs';
@@ -35,7 +35,7 @@ export class TemplatesSrv {
         const { title, description, author_picture, image } = doc;
         let imageThumnail = image;
         if (imageThumnail) {
-            imageThumnail = getThumbnailPath(imageThumnail);
+            imageThumnail = getSquarePath(imageThumnail);
         }
         let photo = imageThumnail ? imageThumnail : author_picture;
         photo = getBucketFilePath(photo);
