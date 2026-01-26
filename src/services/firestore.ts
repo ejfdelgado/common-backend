@@ -37,6 +37,20 @@ export class MyStore {
         return firestore.batch();
     }
 
+    // MyStore.expandCollection(collection)
+    static expandCollection(collection: string) {
+        const prefix = process.env.ENV ? process.env.ENV : "pro";
+        return collection.split("/").map((el, index) => {
+            if (index % 2 == 0) {
+                //collection name
+                return prefix + "-" + el
+            } else {
+                //id
+                return el;
+            }
+        }).join("/");
+    }
+
     static async readByIds(collection: string, ids: string[], firestoreInstance: any = null) {
         const lista = [];
         const theJson: any = {};
@@ -45,7 +59,7 @@ export class MyStore {
         }
         for (let i = 0; i < ids.length; i++) {
             const id = ids[i];
-            lista.push(firestore.doc(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}/${id}`));
+            lista.push(firestore.doc(`${MyStore.expandCollection(collection)}/${id}`));
         }
         let response;
         if (firestoreInstance == null) {
@@ -66,7 +80,7 @@ export class MyStore {
 
     // Si no encuentra retorna undefined
     static async readById(collection: string, id: string, firestoreInstance: any = null) {
-        const document = firestore.doc(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}/${id}`);
+        const document = firestore.doc(`${MyStore.expandCollection(collection)}/${id}`);
         let doc;
         if (firestoreInstance == null) {
             doc = await document.get();
@@ -81,7 +95,7 @@ export class MyStore {
     }
 
     static async create(collection: string, payload: any, firestoreInstance: any = null) {
-        const elDoc = await firestore.collection(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}`).add(payload);
+        const elDoc = await firestore.collection(`${MyStore.expandCollection(collection)}`).add(payload);
         if (firestoreInstance == null) {
             payload.id = elDoc.id;
             return payload;
@@ -92,7 +106,7 @@ export class MyStore {
     }
 
     static async createById(collection: string, id: string, payload: any, firestoreInstance: any = null) {
-        const document = firestore.doc(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}/${id}`);
+        const document = firestore.doc(`${MyStore.expandCollection(collection)}/${id}`);
         if (firestoreInstance == null) {
             await document.set(payload);
         } else {
@@ -102,7 +116,7 @@ export class MyStore {
     }
 
     static async updateOrCreateById(collection: string, id: string, payload: any, firestoreInstance: any = null) {
-        const localKey = `${process.env.ENV ? process.env.ENV : "pro"}-${collection}/${id}`;
+        const localKey = `${MyStore.expandCollection(collection)}/${id}`;
         const document = firestore.doc(localKey);
         if (firestoreInstance == null) {
             await document.set(payload, { merge: true });
@@ -112,7 +126,7 @@ export class MyStore {
     }
 
     static async updateById(collection: string, id: string, payload: any, firestoreInstance: any = null) {
-        const document = firestore.doc(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}/${id}`);
+        const document = firestore.doc(`${MyStore.expandCollection(collection)}/${id}`);
         if (firestoreInstance == null) {
             await document.update(payload);
         } else {
@@ -121,7 +135,7 @@ export class MyStore {
     }
 
     static async deleteById(collection: string, id: string, firestoreInstance: any = null) {
-        const document = firestore.doc(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}/${id}`);
+        const document = firestore.doc(`${MyStore.expandCollection(collection)}/${id}`);
         if (firestoreInstance == null) {
             await document.delete();
         } else {
@@ -138,7 +152,7 @@ export class MyStore {
         firestoreInstance: any = null,
         select: string[] = [],
     ) {
-        const collectionReference = firestore.collection(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}`);
+        const collectionReference = firestore.collection(`${MyStore.expandCollection(collection)}`);
         let theQuery: any = collectionReference;
         for (let i = 0; i < orderColumns.length; i++) {
             const orderColumn = orderColumns[i];
@@ -174,7 +188,7 @@ export class MyStore {
     }
 
     static async exist(collection: string, id: string) {
-        const collectionReference = firestore.collection(`${process.env.ENV ? process.env.ENV : "pro"}-${collection}`);
+        const collectionReference = firestore.collection(`${MyStore.expandCollection(collection)}`);
         const snap = await collectionReference
             .doc(id)
             .get();
