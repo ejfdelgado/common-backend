@@ -1,6 +1,6 @@
 import { ApiResponse, AuthenticatedRequest } from "../types";
 import { Response } from 'express';
-import { General } from "../tools/General";
+import { General, innerTextLite } from "../tools/General";
 import { MyStore } from "./firestore";
 import { MyUtilities } from 'ejfdelgado-common-ts';
 
@@ -61,8 +61,9 @@ export class FirestoreWeb {
 
         function computeSearchable(data: { [key: string]: string }): string[] {
             const keys = Object.keys(data);
-            const completeText = keys.map(key => data[key]).join(" ");
-            return MyUtilities.partirTexto(completeText);
+            const completeText = innerTextLite(keys.map(key => data[key]).join(" "));
+            const tokens = MyUtilities.partirTexto(completeText);
+            return tokens;
         }
 
         let actualSearchables = filterObject(data, conf.searchFields);

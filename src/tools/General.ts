@@ -1,6 +1,7 @@
 import { SimpleObj } from 'ejfdelgado-common-ts';
 import { ParametrosIncompletosException } from '../errors';
-import express, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
+import { decode } from 'html-entities';
 
 export function asyncHandler<T extends (req: Request, res: Response, next: NextFunction) => any>(
     fn: T
@@ -20,6 +21,17 @@ export function getSquarePath(value: string) {
     return value.replace(/\.[a-z\?=\d]+$/ig, (extension: string) => {
         return "_square" + extension;
     });
+}
+
+export function innerTextLite(html: string): string {
+    return decode(
+        html
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+    );
 }
 
 export function getBucketFilePath(value: string | null) {
