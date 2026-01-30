@@ -30,8 +30,8 @@ export class FirestoreWeb {
         function autoCreation() {
             data.created = now;
             data.updated = now;
-            if (req.user?.email) {
-                data.author = req.user?.email;
+            if (req.user?.uid) {
+                data.author = req.user?.uid;
                 if (conf?.autoAuthor) {
                     if (req.user?.picture) {
                         data.author_picture = req.user?.picture
