@@ -49,6 +49,8 @@ export class TemplatesSrv {
             title: truncateString(50, escapeHtml(title)),
             description: truncateString(120, escapeHtml(description)),
             url,
+            width: 800,
+            height: 800,
         };
 
         const filePath = path.join(__dirname, '../assets/html/social.html');
