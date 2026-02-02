@@ -1,6 +1,5 @@
 import { Response, NextFunction } from 'express';
 import { firebaseAdmin } from '../firebase-admin';
-import admin from 'firebase-admin';
 import { AuthenticatedRequest } from '../types';
 
 export async function firebaseAuthMiddleware(
