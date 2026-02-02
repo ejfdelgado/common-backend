@@ -11,6 +11,7 @@ import { MySQLSrv } from './services/mysql';
 import { FirestoreWeb } from './services/firestoreWeb';
 import { firebaseAuthMiddleware } from './middleware/firebase-auth.middleware';
 import { TemplatesSrv } from './services/templates';
+import { RolesAdminSrv } from './services/rolesAdmin';
 
 const allowedOrigins = [
     'http://localhost:4200',
@@ -85,7 +86,10 @@ class App {
 
         this.app.get('/social', asyncHandler(TemplatesSrv.socialShare));
 
-
+        this.app.get('/admin/users', asyncHandler(RolesAdminSrv.pageUsers));
+        this.app.get('/admin/user/roles', asyncHandler(RolesAdminSrv.listRoles));
+        this.app.put('/admin/user/roles', asyncHandler(RolesAdminSrv.addRole));
+        this.app.delete('/admin/user/roles', asyncHandler(RolesAdminSrv.removeRole));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
