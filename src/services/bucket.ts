@@ -1,9 +1,12 @@
 import { Response } from 'express';
-import { Storage } from "@google-cloud/storage";
-import { ApiResponse, AuthenticatedRequest } from '../types';
+import { FileMetadata, Storage } from "@google-cloud/storage";
+import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types';
 import { General } from '../tools/General';
+import { NoAutorizadoException } from '../errors';
 
 const storage = new Storage();
+
+export type BucketActionsType = "read" | "delete" | "write";
 
 export class BucketsSrv {
 
@@ -24,6 +27,11 @@ export class BucketsSrv {
 
         const bucketRef = storage.bucket(bucket_name);
         const gcsFile = bucketRef.file(file_path);
+
+        if ((await BucketsSrv.fileExists(bucket_name, file_path))) {
+            const [metadata] = await gcsFile.getMetadata();
+            BucketsSrv.checkFilePermissions(metadata, "write", req.user);
+        }
 
         const stream = gcsFile.createWriteStream({
             resumable: false,
@@ -74,11 +82,25 @@ export class BucketsSrv {
         if (!(await BucketsSrv.fileExists(bucket_name, file_path))) {
             return res.status(204).json({ error: 'file not found' });
         }
+        const [metadata] = await file.getMetadata();
+        BucketsSrv.checkFilePermissions(metadata, "delete", req.user);
 
         await file.delete();
 
         const response: ApiResponse = { message: "ok", success: true, timestamp: new Date(), };
         return res.status(200).json(response);
+    }
+
+    static async checkFilePermissions(metadata: FileMetadata, action: BucketActionsType, user?: AuthenticatedUser | null) {
+        const customMetadata = metadata.metadata;
+        if (customMetadata) {
+            const { roles } = customMetadata;
+            if (roles) {
+                if (!user) {
+                    throw new NoAutorizadoException("Not allowed");
+                }
+            }
+        }
     }
 
     static async readFile(req: AuthenticatedRequest, res: Response) {
@@ -103,6 +125,7 @@ export class BucketsSrv {
 
         // Get file metadata for content type
         const [metadata] = await file.getMetadata();
+        BucketsSrv.checkFilePermissions(metadata, "read", req.user);
 
         res.status(200).setHeader("Content-Type", metadata.contentType || "application/octet-stream");
         if (inline == "1") {

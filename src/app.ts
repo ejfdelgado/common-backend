@@ -14,7 +14,7 @@ import { TemplatesSrv } from './services/templates';
 import { RolesAdminSrv } from './services/rolesAdmin';
 import { checkRole } from './middleware/firebase-role.middleware';
 
-const allowedOrigins = [
+let allowedOrigins = [
     'http://localhost:4200',
     'https://localhost:4200',
 ];
@@ -22,7 +22,7 @@ const allowedOrigins = [
 const upload = multer({ storage: multer.memoryStorage() });
 
 if (process.env.CORS_MAIN_ALLOWED_ORIGIN) {
-    allowedOrigins.push(...process.env.CORS_MAIN_ALLOWED_ORIGIN.split(/[, ]/));
+    allowedOrigins = process.env.CORS_MAIN_ALLOWED_ORIGIN.split(/[;,\s]/).map(e => e.trim()).filter(e => e.length > 0);
 }
 
 class App {
