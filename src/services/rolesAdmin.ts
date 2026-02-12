@@ -32,15 +32,14 @@ export class RolesAdminSrv {
                 response.data.list.push(userRecord);
             }
         } else {
+            let result: any = null;
             if (offset) {
-                const result = await admin.auth().listUsers(limit, offset);
-                response.data.list = result.users;
-                response.data.offset = result.pageToken;
+                result = await admin.auth().listUsers(limit, offset);
             } else {
-                const result = await admin.auth().listUsers(limit);
-                response.data.list = result.users;
-                response.data.offset = result.pageToken;
+                result = await admin.auth().listUsers(limit);
             }
+            response.data.list = result.users;
+            response.data.offset = result.pageToken;
         }
         res.status(200).json(response);
     }

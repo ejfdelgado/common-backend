@@ -87,7 +87,9 @@ class App {
 
         this.app.get('/social', asyncHandler(TemplatesSrv.socialShare));
 
-        this.app.get('/admin/users', checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.pageUsers));
+        this.app.get('/admin/users',
+            //checkRole(["superadmin"]), 
+            asyncHandler(RolesAdminSrv.pageUsers));
         this.app.get('/admin/user/roles', asyncHandler(RolesAdminSrv.listRoles));
         this.app.put('/admin/user/roles', asyncHandler(RolesAdminSrv.addRole));
         this.app.delete('/admin/user/roles', asyncHandler(RolesAdminSrv.removeRole));
