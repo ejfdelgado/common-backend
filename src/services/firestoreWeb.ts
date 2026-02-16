@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { General, innerTextLite } from "../tools/General";
 import { MyStore } from "./firestore";
 import { MyUtilities } from 'ejfdelgado-common-ts';
+import { NoAutorizadoException } from "../errors";
 
 export class FirestoreWeb {
     static async createUpdate(req: AuthenticatedRequest, res: Response) {
@@ -17,12 +18,18 @@ export class FirestoreWeb {
         let confIn: any = General.readParam(req, "conf", {}, false);
 
         const conf = Object.assign({
+            useAuthor: true,
             autoAuthor: true,
+            autoOwner: true,
             searchFields: [],
         }, confIn);
 
         delete data.created;
         delete data.author;
+
+        if (!(typeof data.id == "string" && data.id.lengt > 0)) {
+            delete data.id;
+        }
 
         let id: string | undefined = data.id;
         let dbResponse: any = null;
@@ -31,14 +38,19 @@ export class FirestoreWeb {
             data.created = now;
             data.updated = now;
             if (req.user?.uid) {
-                data.author = req.user?.uid;
-                if (conf?.autoAuthor) {
+                if (conf?.useAuthor === true) {
+                    data.author = req.user.uid;
+                }
+                if (conf?.autoAuthor === true) {
                     if (req.user?.picture) {
                         data.author_picture = req.user?.picture
                     }
                     if (req.user?.name) {
                         data.author_name = req.user?.name
                     }
+                }
+                if (conf?.autoOwner === true) {
+                    data.owners = [req.user.uid]
                 }
             }
 
@@ -76,6 +88,13 @@ export class FirestoreWeb {
             } else {
                 // Exists before, read parameters to compute searchable
                 const oldDoc = await MyStore.readById(collection, id);
+                // Check owners
+                if (oldDoc.owners instanceof Array) {
+                    // Check current user is in
+                    if (!req.user?.uid || oldDoc.owners.indexOf(req.user.uid) < 0) {
+                        throw new NoAutorizadoException("Not owner");
+                    }
+                }
                 const oldSearchables = filterObject(oldDoc, conf.searchFields);
                 actualSearchables = Object.assign(oldSearchables, actualSearchables);
                 data.updated = now;
@@ -103,6 +122,13 @@ export class FirestoreWeb {
         };
         const collection = General.readParam(req, "collection", undefined, true);
         const id = General.readParam(req, "id", undefined, true);
+        const oldDoc = await MyStore.readById(collection, id);
+        if (oldDoc.owners instanceof Array) {
+            // Check current user is in
+            if (!req.user?.uid || oldDoc.owners.indexOf(req.user.uid) < 0) {
+                throw new NoAutorizadoException("Not owner");
+            }
+        }
         await MyStore.deleteById(collection, id);
         res.status(200).json(response);
     }
