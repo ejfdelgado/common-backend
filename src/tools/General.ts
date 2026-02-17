@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import { decode } from 'html-entities';
 import { encode } from "@msgpack/msgpack";
 import { ApiResponse } from '../types';
+import { AES } from 'crypto-js';
 
 export function asyncHandler<T extends (req: Request, res: Response, next: NextFunction) => any>(
     fn: T
@@ -67,7 +68,10 @@ export function truncateString(max: number, val?: string) {
 }
 
 export function makeJsonToBinaryResponse(response: ApiResponse, res: Response, pass: string) {
-    const encoded: Uint8Array = encode(Buffer.from(JSON.stringify(response)).toString('base64'));
+    const texto = JSON.stringify(response);
+    const encriptado = AES.encrypt(texto, pass);
+    const encripted = encriptado.toString();
+    const encoded: Uint8Array = encode(encripted);
     const buffer = Buffer.from(encoded.buffer, encoded.byteOffset, encoded.byteLength);
     res.set('Content-Type', 'application/octet-stream');
     res.send(buffer);
