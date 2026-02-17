@@ -66,7 +66,7 @@ export function truncateString(max: number, val?: string) {
     }
 }
 
-export function makeJsonToBinaryResponse(response: ApiResponse, res: Response) {
+export function makeJsonToBinaryResponse(response: ApiResponse, res: Response, pass: string) {
     const encoded: Uint8Array = encode(Buffer.from(JSON.stringify(response)).toString('base64'));
     const buffer = Buffer.from(encoded.buffer, encoded.byteOffset, encoded.byteLength);
     res.set('Content-Type', 'application/octet-stream');

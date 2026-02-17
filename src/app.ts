@@ -95,7 +95,7 @@ class App {
         this.app.put('/admin/user/roles', asyncHandler(RolesAdminSrv.addRole));
         this.app.delete('/admin/user/roles', asyncHandler(RolesAdminSrv.removeRole));
 
-        this.app.get('/params/all', asyncHandler(ParametersSrv.read));
+        this.app.post('/params/all', asyncHandler(ParametersSrv.read));
         this.app.get('/params/generate', asyncHandler(ParametersSrv.generateKeyPair));
         this.app.get('/params/public_key', asyncHandler(ParametersSrv.getPublicKey));
 
