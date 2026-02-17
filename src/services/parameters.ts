@@ -41,4 +41,14 @@ export class ParametersSrv {
         };
         res.status(201).json(response);
     }
+
+    static getPublicKey(req: Request, res: Response) {
+        const response: ApiResponse = {
+            success: true,
+            message: 'Data received successfully',
+            data: process.env.LOCAL_PUBLIC_KEY,
+            timestamp: new Date()
+        };
+        res.status(201).json(response);
+    }
 }

@@ -97,6 +97,7 @@ class App {
 
         this.app.get('/params/all', asyncHandler(ParametersSrv.read));
         this.app.get('/params/generate', asyncHandler(ParametersSrv.generateKeyPair));
+        this.app.get('/params/public_key', asyncHandler(ParametersSrv.getPublicKey));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
