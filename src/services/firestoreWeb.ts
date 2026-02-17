@@ -27,7 +27,7 @@ export class FirestoreWeb {
         delete data.created;
         delete data.author;
 
-        if (!(typeof data.id == "string" && data.id.lengt > 0)) {
+        if (!(typeof data.id == "string" && data.id.length > 0)) {
             delete data.id;
         }
 
@@ -109,7 +109,7 @@ export class FirestoreWeb {
             id = dbResponse.id;
         }
 
-        response.data = { id };
+        response.data = { id, created: now };
 
         res.status(200).json(response);
     }
