@@ -2,6 +2,8 @@ import { SimpleObj } from 'ejfdelgado-common-ts';
 import { ParametrosIncompletosException } from '../errors';
 import { Request, Response, NextFunction } from "express";
 import { decode } from 'html-entities';
+import { encode } from "@msgpack/msgpack";
+import { ApiResponse } from '../types';
 
 export function asyncHandler<T extends (req: Request, res: Response, next: NextFunction) => any>(
     fn: T
@@ -62,6 +64,13 @@ export function truncateString(max: number, val?: string) {
     } else {
         return val;
     }
+}
+
+export function makeJsonToBinaryResponse(response: ApiResponse, res: Response) {
+    const encoded: Uint8Array = encode(Buffer.from(JSON.stringify(response)).toString('base64'));
+    const buffer = Buffer.from(encoded.buffer, encoded.byteOffset, encoded.byteLength);
+    res.set('Content-Type', 'application/octet-stream');
+    res.send(buffer);
 }
 
 export class General {
