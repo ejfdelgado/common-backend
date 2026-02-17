@@ -18,14 +18,14 @@ export class ParametersSrv {
         // Decript the pass with the private key
         let privateKey = process.env.LOCAL_PRIVATE_KEY;
         if (!privateKey) {
-            throw new Error("Misconfiguration");
+            throw new Error("");
         }
         privateKey = privateKey.replace('\n', '');
         const decrypt = new JSEncrypt();
         decrypt.setPrivateKey(privateKey);
-        const decriptedKey = decrypt.decrypt(encriptedKey);
-        if (!decriptedKey) {
-            throw new Error("Misconfiguration");
+        let decriptedKey = decrypt.decrypt(encriptedKey);
+        if (!decriptedKey || decriptedKey.length != 20) {
+            throw new Error("");
         }
         const response: ApiResponse = {
             success: true,
@@ -35,7 +35,7 @@ export class ParametersSrv {
             },
             timestamp: new Date()
         };
-        makeJsonToBinaryResponse(response, res, decriptedKey);
+        makeJsonToBinaryResponse(response, res, (decriptedKey + "a").split('').reverse().join(''));
     }
 
     static generateKeyPair(req: Request, res: Response) {
