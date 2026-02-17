@@ -96,6 +96,7 @@ class App {
         this.app.delete('/admin/user/roles', asyncHandler(RolesAdminSrv.removeRole));
 
         this.app.get('/params/all', asyncHandler(ParametersSrv.read));
+        this.app.get('/params/generate', asyncHandler(ParametersSrv.generateKeyPair));
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
