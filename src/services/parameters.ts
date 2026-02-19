@@ -32,7 +32,8 @@ export class ParametersSrv {
             message: 'Data received successfully',
             data: {
                 GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-                GEMINI_MODEL: process.env.GEMINI_MODEL
+                GEMINI_MODEL: process.env.GEMINI_MODEL,
+                GEMINI_PASS: process.env.GEMINI_PASS,
             },
             timestamp: new Date()
         };
