@@ -77,6 +77,14 @@ export function makeJsonToBinaryResponse(response: ApiResponse, res: Response, p
     res.send(buffer);
 }
 
+export function makeJsonToEncriptedTextResponse(response: ApiResponse, res: Response, pass: string) {
+    const texto = JSON.stringify(response);
+    const encriptado = AES.encrypt(texto, pass);
+    const encripted = encriptado.toString();
+    res.set('Content-Type', 'text/plain');
+    res.send(encripted);
+}
+
 export class General {
 
     static readParam(req: Request, name: string, pred: any = null, complain: boolean = false) {

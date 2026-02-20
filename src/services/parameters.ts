@@ -18,7 +18,7 @@ export class ParametersSrv {
         // Decript the pass with the private key
         let privateKey = process.env.LOCAL_PRIVATE_KEY;
         if (!privateKey) {
-            throw new Error("");
+            throw new Error("Missconfigured");
         }
         privateKey = privateKey.replace('\n', '');
         const decrypt = new JSEncrypt();

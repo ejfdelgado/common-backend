@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { ApiResponse, AuthenticatedRequest } from '../types';
 import { GenerateContentResponse, GoogleGenAI, type GenerateContentConfig } from "@google/genai";
 import { InesperadoException, NoAutorizadoException } from '../errors';
+import JSEncrypt from 'jsencrypt';
+import { makeJsonToEncriptedTextResponse } from '../tools/General';
 
 export class GeminiSrv {
 
@@ -29,8 +31,18 @@ export class GeminiSrv {
 
     static async generate(req: Request, res: Response) {
         const { history, config, pass } = req.body;
-        if (pass != process.env.GEMINI_PASS) {
-            throw new NoAutorizadoException("Not authorized");
+
+        // Decript the pass with the private key
+        let privateKey = process.env.LOCAL_PRIVATE_KEY;
+        if (!privateKey) {
+            throw new Error("Missconfigured");
+        }
+        privateKey = privateKey.replace('\n', '');
+        const decrypt = new JSEncrypt();
+        decrypt.setPrivateKey(privateKey);
+        let decriptedKey = decrypt.decrypt(pass);
+        if (!decriptedKey || decriptedKey.length != 20) {
+            throw new Error("");
         }
         const answer = await GeminiSrv.generateContent(history, config);
         const response: ApiResponse = {
@@ -39,6 +51,6 @@ export class GeminiSrv {
             data: answer,
             timestamp: new Date()
         };
-        res.status(201).json(response);
+        makeJsonToEncriptedTextResponse(response, res, (decriptedKey + "a").split('').reverse().join(''));
     }
 }
