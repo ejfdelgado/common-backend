@@ -99,6 +99,8 @@ export class BucketsSrv {
                 if (!user) {
                     throw new NoAutorizadoException("Not allowed");
                 }
+                //console.log(JSON.stringify(user, null, 4));
+                //console.log(roles);
             }
         }
     }

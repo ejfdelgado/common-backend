@@ -24,7 +24,7 @@ export class EmailHandler {
     );
     let contenido: string | null = null;
     const normalizedTemplate = body.template.replace(/^\s*\//, "");
-    contenido = await BucketsSrv.readTextFile(normalizedTemplate);
+    contenido = await BucketsSrv.readTextFile(normalizedTemplate, body.bucketName, req);
     if (!contenido) {
       contenido = '<body style="font-family: sans-serif;">Misconfigured</body>';
     }
