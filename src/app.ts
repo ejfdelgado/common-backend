@@ -15,6 +15,7 @@ import { RolesAdminSrv } from './services/rolesAdmin';
 import { checkRole } from './middleware/firebase-role.middleware';
 import { ParametersSrv } from './services/parameters';
 import { GeminiSrv } from './services/geminiSrv';
+import { EmailHandler } from './services/email';
 
 let allowedOrigins = [
     'http://localhost:4200',
@@ -101,6 +102,8 @@ class App {
         this.app.get('/params/public_key', asyncHandler(ParametersSrv.getPublicKey));
 
         this.app.post('/gemini/query', asyncHandler(GeminiSrv.generate));
+
+        this.app.post("/srv/email/send", [express.json(), asyncHandler(EmailHandler.send)]);
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {

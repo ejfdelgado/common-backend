@@ -1,8 +1,8 @@
 import { Response } from 'express';
-import { FileMetadata, Storage } from "@google-cloud/storage";
+import { FileMetadata, Storage, File as GFile } from "@google-cloud/storage";
 import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types';
 import { General } from '../tools/General';
-import { NoAutorizadoException } from '../errors';
+import { InesperadoException, NoAutorizadoException } from '../errors';
 
 const storage = new Storage();
 
@@ -103,30 +103,72 @@ export class BucketsSrv {
         }
     }
 
+    static async file2text(file: GFile) {
+        const [contents] = await file.download();
+        const text = contents.toString('utf-8');
+        return text;
+    }
+
+    static async file2textLargeFile(file: GFile) {
+        return new Promise<string>((resolve, reject) => {
+            let data = '';
+
+            file.createReadStream()
+                .on('data', chunk => {
+                    data += chunk.toString();
+                })
+                .on('end', () => {
+                    resolve(data);
+                })
+                .on('error', err => {
+                    reject(err);
+                });
+        });
+    }
+
+    static async readFileRaw(file_path: string, bucket_name?: string, req?: AuthenticatedRequest): Promise<{ file: GFile, metadata: FileMetadata } | null> {
+        if (!bucket_name) {
+            if (!process.env.BUCKET_NAME) {
+                throw new InesperadoException("Missconfiguration");
+            }
+            bucket_name = process.env.BUCKET_NAME;
+        }
+        if (!bucket_name || !file_path) {
+            throw new InesperadoException('bucket_name and file_path are required');
+        }
+        if (!(await BucketsSrv.fileExists(bucket_name, file_path))) {
+            return null;
+        }
+        const bucketRef = storage.bucket(bucket_name);
+        const file = bucketRef.file(file_path);
+        // Get file metadata for content type
+        const [metadata] = await file.getMetadata();
+        if (req) {
+            BucketsSrv.checkFilePermissions(metadata, "read", req.user);
+        }
+        return { file, metadata };
+    }
+
+    static async readTextFile(file_path: string, bucket_name?: string, req?: AuthenticatedRequest): Promise<string | null> {
+        const found = await BucketsSrv.readFileRaw(file_path, bucket_name, req);
+        if (!found) {
+            return null;
+        }
+        const { file } = found;
+        const txt = await BucketsSrv.file2text(file);
+        return txt;
+    }
+
     static async readFile(req: AuthenticatedRequest, res: Response) {
         let bucket_name: string | undefined = General.readParam(req, "bucket_name", undefined, false);
         const file_path: string = General.readParam(req, "file_path", undefined, false);
         const inline: string = General.readParam(req, "inline", "1", false);
 
-        if (!bucket_name) {
-            bucket_name = process.env.BUCKET_NAME;
-        }
-
-        if (!bucket_name || !file_path) {
-            return res.status(400).json({ error: 'bucket_name and file_path are required' });
-        }
-
-        if (!(await BucketsSrv.fileExists(bucket_name, file_path))) {
+        const found = await BucketsSrv.readFileRaw(file_path, bucket_name, req);
+        if (!found) {
             return res.status(204).json({ error: 'file not found' });
         }
-
-        const bucketRef = storage.bucket(bucket_name);
-        const file = bucketRef.file(file_path);
-
-        // Get file metadata for content type
-        const [metadata] = await file.getMetadata();
-        BucketsSrv.checkFilePermissions(metadata, "read", req.user);
-
+        const { file, metadata } = found;
         res.status(200).setHeader("Content-Type", metadata.contentType || "application/octet-stream");
         if (inline == "1") {
             res.setHeader("Content-Disposition", `inline; filename="${file_path.split('/').pop()}"`);
