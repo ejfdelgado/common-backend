@@ -4,3 +4,4 @@ or:
 https://templates.mailchimp.com/resources/inline-css/
 
 metadata:
+roles: system;superadmin

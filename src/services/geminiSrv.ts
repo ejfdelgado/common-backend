@@ -5,6 +5,26 @@ import { InesperadoException, NoAutorizadoException } from '../errors';
 import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
 
+export function removeAccents(text: string): string {
+    return text
+        .normalize('NFD')                 // Separates characters from their accents
+        .replace(/[\u0300-\u036f]/g, ''); // Removes the accent marks (combining marks)
+};
+
+export function normalizeName(name: string) {
+    return removeAccents(name.toLowerCase()).replace(/[^a-z]/g, "_");
+}
+
+export function gescriptionOrNone(desc?: string) {
+    if (typeof desc != "string") {
+        return undefined;
+    }
+    let d = desc.trim();
+    if (d.length > 0) {
+        return d.trim();
+    }
+}
+
 export class GeminiSrv {
 
     static async generateContent(history: any[], config: GenerateContentConfig, author: string): Promise<GenerateContentResponse> {
@@ -31,18 +51,19 @@ export class GeminiSrv {
             const required: string[] = [];
             const properties: Record<string, Schema> = {};
             tool.args.forEach((arg: any) => {
-                properties[arg.name] = {
+                const standarName = normalizeName(arg.name);
+                properties[standarName] = {
                     type: arg.type,
-                    description: arg.desc,
+                    description: gescriptionOrNone(arg.desc),
                 };
                 if (arg.required === true) {
-                    required.push(arg.name);
+                    required.push(standarName);
                 }
             });
             return {
                 functionDeclarations: [{
-                    name: tool.name,
-                    description: tool.desc,
+                    name: normalizeName(tool.name),
+                    description: gescriptionOrNone(tool.desc),
                     parameters: {
                         type: Type.OBJECT,
                         properties: properties,
@@ -74,6 +95,7 @@ export class GeminiSrv {
 
         const calls = answer.functionCalls;
         if (calls) {
+            console.log(JSON.stringify(calls, null, 4));
             /*
             [
                 {
