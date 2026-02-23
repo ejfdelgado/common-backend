@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ApiResponse, AuthenticatedRequest } from '../types';
-import { GenerateContentResponse, GoogleGenAI, type GenerateContentConfig } from "@google/genai";
+import { GenerateContentResponse, GoogleGenAI, Schema, ToolUnion, Type, type GenerateContentConfig } from "@google/genai";
 import { InesperadoException, NoAutorizadoException } from '../errors';
 import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
@@ -25,9 +25,38 @@ export class GeminiSrv {
         return response;
     }
 
-    static async generate(req: Request, res: Response) {
-        const { history, config, pass, author } = req.body;
 
+    static mapTools(tools: any[]): ToolUnion[] {
+        return tools.map((tool: any) => {
+            const required: string[] = [];
+            const properties: Record<string, Schema> = {};
+            tool.args.forEach((arg: any) => {
+                properties[arg.name] = {
+                    type: arg.type,
+                    description: arg.desc,
+                };
+                if (arg.required === true) {
+                    required.push(arg.name);
+                }
+            });
+            return {
+                functionDeclarations: [{
+                    name: tool.name,
+                    description: tool.desc,
+                    parameters: {
+                        type: Type.OBJECT,
+                        properties: properties,
+                        required: required,
+                    },
+                }],
+            };
+        });
+    }
+
+    static async generate(req: Request, res: Response) {
+        const { history, config, pass, author, tools } = req.body;
+        const castedConfig: GenerateContentConfig = config;
+        const mapedTools = GeminiSrv.mapTools(tools);
         // Decript the pass with the private key
         let privateKey = process.env.LOCAL_PRIVATE_KEY;
         if (!privateKey) {
@@ -40,7 +69,23 @@ export class GeminiSrv {
         if (!decriptedKey || decriptedKey.length != 20) {
             throw new Error("");
         }
-        const answer = await GeminiSrv.generateContent(history, config, author);
+        castedConfig.tools = mapedTools;
+        const answer = await GeminiSrv.generateContent(history, castedConfig, author);
+
+        const calls = answer.functionCalls;
+        if (calls) {
+            /*
+            [
+                {
+                    "name": "notify_user_provide_contact_info",
+                    "args": {
+                        "user_contact_info": "edgar.jose.fernando.delgado@gmail.com"
+                    }
+                }
+            ]
+            */
+        }
+
         const response: ApiResponse = {
             success: true,
             message: 'Data received successfully',
