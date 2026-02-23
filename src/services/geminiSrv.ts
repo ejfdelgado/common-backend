@@ -7,17 +7,13 @@ import { makeJsonToEncriptedTextResponse } from '../tools/General';
 
 export class GeminiSrv {
 
-    static client_: GoogleGenAI | null = null;
-
-    static getClient(): GoogleGenAI {
-        if (!GeminiSrv.client_) {
-            GeminiSrv.client_ = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    static async generateContent(history: any[], config: GenerateContentConfig, author: string): Promise<GenerateContentResponse> {
+        const ENV_KEY = `GEMINI_${author}`;
+        const KEY_VAL = process.env[ENV_KEY];
+        if (!KEY_VAL) {
+            throw new NoAutorizadoException("Not configured");
         }
-        return GeminiSrv.client_;
-    }
-
-    static async generateContent(history: any[], config: GenerateContentConfig): Promise<GenerateContentResponse> {
-        const client = GeminiSrv.getClient();
+        const client = new GoogleGenAI({ apiKey: KEY_VAL });
         if (!process.env.GEMINI_MODEL) {
             throw new InesperadoException("Model not found");
         }
@@ -30,7 +26,7 @@ export class GeminiSrv {
     }
 
     static async generate(req: Request, res: Response) {
-        const { history, config, pass } = req.body;
+        const { history, config, pass, author } = req.body;
 
         // Decript the pass with the private key
         let privateKey = process.env.LOCAL_PRIVATE_KEY;
@@ -44,7 +40,7 @@ export class GeminiSrv {
         if (!decriptedKey || decriptedKey.length != 20) {
             throw new Error("");
         }
-        const answer = await GeminiSrv.generateContent(history, config);
+        const answer = await GeminiSrv.generateContent(history, config, author);
         const response: ApiResponse = {
             success: true,
             message: 'Data received successfully',
