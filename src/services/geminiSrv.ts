@@ -84,7 +84,7 @@ export class GeminiSrv {
         return rendered;
     }
 
-    static async sendEmail(tool: any, template: string = "") {
+    static async sendEmail(tool: any, history: any[], template: string = "") {
         /*
         {
             "args": [
@@ -100,6 +100,37 @@ export class GeminiSrv {
             ],
             "to": "edgar.jose.fernando.delgado@gmail.com",
         }
+        */
+
+        // Simplify last message:
+        if (history[history.length - 1].parts.length > 0) {
+            let lastMessage = history[history.length - 1].parts[0].text;
+            if (typeof lastMessage == "string") {
+                lastMessage = lastMessage.replace(/^.*\[USER QUESTION\]\n/igs, "");
+                history[history.length - 1].parts[0].text = lastMessage;
+            }
+        }
+        //console.log(JSON.stringify(history, null, 4));
+
+        /*
+        [
+            {
+                "role": "user",
+                "parts": [
+                    {
+                        "text": "Do you provide immigration services?"
+                    }
+                ]
+            },
+            {
+                "role": "model",
+                "parts": [
+                    {
+                        "text": "The response"
+                    }
+                ]
+            },
+        ]
         */
 
         let success = true;
@@ -155,7 +186,7 @@ export class GeminiSrv {
                             }
                         });
                         if (tool.type == "mail") {
-                            toolsStatus.push(await GeminiSrv.sendEmail(tool));
+                            toolsStatus.push(await GeminiSrv.sendEmail(tool, history));
                         }
                     }
                 }
