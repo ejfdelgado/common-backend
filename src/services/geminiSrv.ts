@@ -74,6 +74,48 @@ export class GeminiSrv {
         });
     }
 
+    static replaceArguments(template: string, args: any[]) {
+        let rendered = template;
+        for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
+            const pattern = `\\$\\s*\\{\\s*${arg.name}\\s*\\}`;
+            rendered = rendered.replace(new RegExp(pattern, "ig"), arg.val);
+        }
+        return rendered;
+    }
+
+    static async sendEmail(tool: any, template: string = "") {
+        /*
+        {
+            "args": [
+                {
+                    "type": "STRING",
+                    "desc": "",
+                    "name": "User contact info",
+                    "val": "edgar@gmail.com",
+                    "ok": "We will contact yo to ${user contact} as soon as possible.",
+                    "error": "Sorry, may you contact us later?"
+
+                }
+            ],
+            "to": "edgar.jose.fernando.delgado@gmail.com",
+        }
+        */
+
+        let success = true;
+        let message = GeminiSrv.replaceArguments(tool.ok, tool.args);
+
+        if (!success) {
+            message = GeminiSrv.replaceArguments(tool.error, tool.args);
+        }
+
+        return {
+            name: tool.name,
+            message,
+            success,
+        };
+    }
+
     static async generate(req: Request, res: Response) {
         const { history, config, pass, author, tools } = req.body;
         const castedConfig: GenerateContentConfig = config;
@@ -93,25 +135,40 @@ export class GeminiSrv {
         castedConfig.tools = mapedTools;
         const answer = await GeminiSrv.generateContent(history, castedConfig, author);
 
+        const getToolByName = (name: string) => {
+            return tools.find((tool: any) => normalizeName(tool.name) == name);
+        };
+
         const calls = answer.functionCalls;
+        const toolsStatus: any[] = [];
         if (calls) {
-            console.log(JSON.stringify(calls, null, 4));
-            /*
-            [
-                {
-                    "name": "notify_user_provide_contact_info",
-                    "args": {
-                        "user_contact_info": "edgar.jose.fernando.delgado@gmail.com"
+            for (let j = 0; j < calls.length; j++) {
+                const call = calls[j];
+                if (call.name) {
+                    const tool = getToolByName(call.name);
+                    if (tool) {
+                        tool.args.forEach((arg: any) => {
+                            const normalizedName = normalizeName(arg.name);
+                            if (call.args) {
+                                const val = call.args[normalizedName];
+                                arg.val = val;
+                            }
+                        });
+                        if (tool.type == "mail") {
+                            toolsStatus.push(await GeminiSrv.sendEmail(tool));
+                        }
                     }
                 }
-            ]
-            */
+            }
         }
 
         const response: ApiResponse = {
             success: true,
             message: 'Data received successfully',
-            data: answer,
+            data: {
+                result: answer,
+                toolsStatus,
+            },
             timestamp: new Date()
         };
         makeJsonToEncriptedTextResponse(response, res, (decriptedKey + "a").split('').reverse().join(''));
