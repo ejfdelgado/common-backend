@@ -20,6 +20,7 @@
     "run_docker": "docker run us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version"
   },
   "dependencies": {
+    "@google-cloud/bigquery": "^8.1.1",
     "@google-cloud/firestore": "^8.1.0",
     "@google-cloud/storage": "^7.17.2",
     "@google/genai": "^1.41.0",
@@ -46,11 +47,11 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
-    "@types/node": "^20.19.11",
+    "@types/node": "^20.19.34",
     "@types/node-rsa": "^1.1.4",
     "dotenv": "^17.2.3",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }
