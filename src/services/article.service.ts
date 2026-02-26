@@ -40,6 +40,23 @@ export async function updateArticle(article: ArticleCreate) {
     await bigquery.query(options);
 }
 
+export async function deleteArticle(id: string) {
+    const query = `
+    DELETE FROM \`${process.env.GCP_PROJECT_ID}.${DATASET}.${TABLE}\`
+    WHERE id = @id
+  `;
+
+    const options = {
+        query,
+        location: 'US',
+        params: { id },
+    };
+
+    await bigquery.query(options);
+
+    return { deleted: true };
+}
+
 export async function searchArticles(
     path: string,
     searchText: string,
