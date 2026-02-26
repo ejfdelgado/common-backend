@@ -5,6 +5,3 @@ export const bigquery = new BigQuery({
 });
 
 export const DATASET = 'app_data';
-export const TABLE = 'articles';
-
-export const TABLE_PATH = `${process.env.GCP_PROJECT_ID}.${DATASET}.${TABLE}`;

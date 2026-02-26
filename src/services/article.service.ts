@@ -1,6 +1,9 @@
 
-import { bigquery, TABLE_PATH, DATASET, TABLE } from './bigquery';
+import { bigquery, DATASET } from './bigquery';
 import { Article, CursorPaginatedResult, Cursor, ArticleCreate } from './bigquery_types';
+
+export const TABLE = 'articles';
+export const TABLE_PATH = `${process.env.GCP_PROJECT_ID}.${DATASET}.${TABLE}`;
 
 export async function createArticle(article: ArticleCreate) {
     const row = {
