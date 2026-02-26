@@ -18,6 +18,28 @@ export async function createArticle(article: ArticleCreate) {
     return row;
 }
 
+export async function updateArticle(article: ArticleCreate) {
+    const query = `
+    UPDATE \`${process.env.GCP_PROJECT_ID}.${DATASET}.${TABLE}\`
+    SET
+      title = IFNULL(@title, title),
+      path = IFNULL(@path, path)
+    WHERE id = @id
+  `;
+
+    const options = {
+        query,
+        location: 'US',
+        params: {
+            id: article.id,
+            title: article.title,
+            path: article.path,
+        },
+    };
+
+    await bigquery.query(options);
+}
+
 export async function searchArticles(
     path: string,
     searchText: string,
