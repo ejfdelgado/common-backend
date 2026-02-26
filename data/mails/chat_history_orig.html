@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+</head>
+
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4;">
+    <div style="padding: 50px 0;">
+        <table
+            style="margin: 0 auto; width: 800px; max-width: 800px; border: 1px solid; border-radius: 15px; padding: 40px 20px; border-color: rgb(181, 181, 181); background-color: aliceblue;">
+            <tbody>
+                <tr>
+                    <td colspan="2">
+                        <h1 style="margin-top: 0px;">${tool.name}</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background-color: rgb(206, 217, 255);"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <h2>Information:</h2>
+                    </td>
+                </tr>
+$[for arg in ${tool.args}]
+                <tr>
+                    <td><span style="display: block; padding: 10px 0;">${arg.name}:</span></td>
+                    <td><strong style="display: block; padding: 10px 0;">${arg.val}</strong></td>
+                </tr>
+$[endfor]
+                <tr>
+                    <td colspan="2" style="background-color: rgb(206, 217, 255);"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <h2>History:</h2>
+                    </td>
+                </tr>
+$[for message in ${history}]
+$[if ${message.role} == 'model' && ${message.parts.0.text} != undefined]
+                <tr>
+                    <td colspan="2" style="padding-bottom: 15px; padding-right: 30%;"><span
+                            style="display: block; background-color: rgb(237, 237, 237); padding: 10px; border-radius: 10px; position: relative;"><span style="font-size: 0.8rem; position: absolute; top: -18px;">Assistant: </span>${message.parts.0.text}</span></td>
+                </tr>
+$[endif]
+$[if ${message.role} == 'tool']
+                <tr>
+                    <td colspan="2" style="padding-bottom: 15px; padding-right: 30%;"><span
+                            style="display: block; background-color: rgb(237, 237, 237); padding: 10px; border-radius: 10px; position: relative;"><span style="font-size: 0.8rem; position: absolute; top: -18px;">Tool: </span>${message.parts.0.functionResponse.response.result}</span></td>
+                </tr>
+$[endif]
+$[if ${message.role} == 'user']
+                <tr>
+                    <td colspan="2" style="padding-bottom: 15px; padding-left: 30%;"><span
+                            style="display: block; background-color: rgb(198, 228, 255); padding: 10px; border-radius: 10px; position: relative;">${message.parts.0.text}</span></td>
+                </tr>
+$[endif]
+$[endfor]
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

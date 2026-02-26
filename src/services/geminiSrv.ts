@@ -4,6 +4,17 @@ import { GenerateContentResponse, GoogleGenAI, Schema, ToolUnion, Type, type Gen
 import { InesperadoException, NoAutorizadoException } from '../errors';
 import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
+import { EmailHandler } from './email';
+import { marked } from 'marked';
+
+const renderer: any = {
+  link({ href, raw, text, tokens, type }: any) {
+    return `<a href="${href}" title="${text ?? ''}" target="_blank">${text}</a>`;
+    return "";
+  }
+};
+
+marked.use({ renderer });
 
 export function removeAccents(text: string): string {
     return text
@@ -84,24 +95,7 @@ export class GeminiSrv {
         return rendered;
     }
 
-    static async sendEmail(tool: any, history: any[], template: string = "") {
-        /*
-        {
-            "args": [
-                {
-                    "type": "STRING",
-                    "desc": "",
-                    "name": "User contact info",
-                    "val": "edgar@gmail.com",
-                    "ok": "We will contact yo to ${user contact} as soon as possible.",
-                    "error": "Sorry, may you contact us later?"
-
-                }
-            ],
-            "to": "edgar.jose.fernando.delgado@gmail.com",
-        }
-        */
-
+    static async sendEmail(tool: any, history: any[], template: string = "mails/chat_history_orig.html") {
         // Simplify last message:
         if (history[history.length - 1].parts.length > 0) {
             let lastMessage = history[history.length - 1].parts[0].text;
@@ -110,33 +104,26 @@ export class GeminiSrv {
                 history[history.length - 1].parts[0].text = lastMessage;
             }
         }
-        //console.log(JSON.stringify(history, null, 4));
-
-        /*
-        [
-            {
-                "role": "user",
-                "parts": [
-                    {
-                        "text": "Do you provide immigration services?"
-                    }
-                ]
-            },
-            {
-                "role": "model",
-                "parts": [
-                    {
-                        "text": "The response"
-                    }
-                ]
-            },
-        ]
-        */
-
         let success = true;
         let message = GeminiSrv.replaceArguments(tool.ok, tool.args);
-
-        if (!success) {
+        try {
+            // Iterate history to use MD when needed
+            history.forEach((message)=>{
+                if (message.role == 'model') {
+                    if (message.parts[0].text) {
+                        message.parts[0].text = marked.parse(message.parts[0].text);
+                    }
+                }
+            })
+            const response = await EmailHandler.sendInternal({
+                params: { tool, history },
+                subject: `Assistant - ${tool.name}`,
+                template: template,
+                to: tool.to,
+            }, true, undefined, false);
+        } catch (err) {
+            console.log(err);
+            success = false;
             message = GeminiSrv.replaceArguments(tool.error, tool.args);
         }
 

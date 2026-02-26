@@ -4,14 +4,25 @@ import { General } from '../tools/General';
 import { InesperadoException } from "../errors";
 import { BucketsSrv } from "./bucket";
 import { MyTemplate, sortify } from "ejfdelgado-common-ts";
-import { ApiResponse } from "../types";
+import { ApiResponse, AuthenticatedRequest } from "../types";
 
+export interface SendRequestType {
+  template: string;
+  bucketName?: string;
+  params: any;
+  subject: string;
+  to?: string[] | string;
+  replyTo?: string;
+}
 
 export class EmailHandler {
-  static async send(req: Request, res: Response) {
-    let debug = false;
-    const body = General.readParam(req, "body");
-    debug = General.readParam(req, "debug", "0", false) != "0";
+
+  static async sendInternal(
+    body: SendRequestType,
+    send: boolean = false,
+    req?: AuthenticatedRequest,
+    debug: boolean = false) {
+
     const EMAIL_SENDER = process.env.EMAIL_SENDER;
     if (!process.env.SEND_GRID_VARIABLE || !EMAIL_SENDER) {
       throw new InesperadoException("Missconfiguration");
@@ -66,6 +77,22 @@ export class EmailHandler {
       //console.log(JSON.stringify(body.params, null, 4));
       //console.log(JSON.stringify(contenidoFinal, null, 4));
     }
+
+    const reponse: any = { msg, contenidoFinal };
+
+    if (send) {
+      reponse.result = await sgMail.send(msg);
+    }
+
+    return reponse;
+  }
+
+  static async send(req: Request, res: Response) {
+    let debug = false;
+    const body = General.readParam(req, "body");
+    debug = General.readParam(req, "debug", "0", false) != "0";
+
+    const { msg, contenidoFinal } = await EmailHandler.sendInternal(body, false, req, debug);
 
     if (debug) {
       res.status(200).set({ 'content-type': 'text/html; charset=utf-8' }).send(contenidoFinal).end();
