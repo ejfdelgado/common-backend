@@ -1,6 +1,22 @@
 
-import { bigquery, TABLE_PATH } from './bigquery';
-import { Article, CursorPaginatedResult, Cursor } from './bigquery_types';
+import { bigquery, TABLE_PATH, DATASET, TABLE } from './bigquery';
+import { Article, CursorPaginatedResult, Cursor, ArticleCreate } from './bigquery_types';
+
+export async function createArticle(article: ArticleCreate) {
+    const row = {
+        id: article.id,
+        title: article.title,
+        path: article.path,
+        created_at: new Date(),
+    };
+
+    await bigquery
+        .dataset(DATASET)
+        .table(TABLE)
+        .insert(row);
+
+    return row;
+}
 
 export async function searchArticles(
     path: string,
