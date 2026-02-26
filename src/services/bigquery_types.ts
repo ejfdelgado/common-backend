@@ -1,17 +1,16 @@
 export interface Article {
   id: string;
   title: string;
+  path: string;// for example pro-knowledge/dfdsf546dfs/pro-fact
   created_at: string;
-  updated_at: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pageSize?: number;
+export interface Cursor {
+  created_at: string;
+  id: string;
 }
 
-export interface PaginatedResult<T> {
+export interface CursorPaginatedResult<T> {
   data: T[];
-  page: number;
-  pageSize: number;
+  nextCursor: Cursor | null;
 }

@@ -1,70 +1,118 @@
 
 import { bigquery, TABLE_PATH } from './bigquery';
-import { Article, PaginatedResult } from './bigquery_types';
+import { Article, CursorPaginatedResult, Cursor } from './bigquery_types';
 
 export async function searchArticles(
+    path: string,
     searchText: string,
-    page = 1,
-    pageSize = 10
-): Promise<PaginatedResult<Article>> {
-    const offset = (page - 1) * pageSize;
+    pageSize = 10,
+    cursor?: Cursor
+): Promise<CursorPaginatedResult<Article>> {
+
+    const hasCursor = !!cursor;
 
     const query = `
     SELECT *
     FROM \`${TABLE_PATH}\`
     WHERE SEARCH((title), @searchText)
-    ORDER BY created_at DESC
+    AND path = @path
+    ${hasCursor
+            ? `
+        AND (
+              (created_at < @cursorCreatedAt)
+           OR (created_at = @cursorCreatedAt AND id < @cursorId)
+        )
+        `
+            : ''
+        }
+    ORDER BY created_at DESC, id DESC
     LIMIT @pageSize
-    OFFSET @offset
   `;
 
-    const options = {
-        query,
-        location: 'US',
-        params: {
-            searchText,
-            pageSize,
-            offset,
-        },
+    const params: Record<string, any> = {
+        searchText,
+        pageSize,
+        path,
     };
 
-    const [rows] = await bigquery.query(options);
+    if (hasCursor) {
+        params.cursorCreatedAt = cursor!.created_at;
+        params.cursorId = cursor!.id;
+    }
+
+    const [rows] = await bigquery.query({
+        query,
+        location: 'US',
+        params,
+    });
+
+    const articles = rows as Article[];
+
+    const last = articles[articles.length - 1];
 
     return {
-        data: rows as Article[],
-        page,
-        pageSize,
+        data: articles,
+        nextCursor: last
+            ? {
+                created_at: last.created_at,
+                id: last.id,
+            }
+            : null,
     };
 }
 
 export async function listArticles(
-    page = 1,
-    pageSize = 10
-): Promise<PaginatedResult<Article>> {
-    const offset = (page - 1) * pageSize;
+    path: string,
+    pageSize = 10,
+    cursor?: Cursor
+): Promise<CursorPaginatedResult<Article>> {
+
+    const hasCursor = !!cursor;
 
     const query = `
     SELECT *
     FROM \`${TABLE_PATH}\`
-    ORDER BY created_at DESC
+    WHERE path = @path
+    ${hasCursor
+            ? `
+        AND (
+              (created_at < @cursorCreatedAt)
+           OR (created_at = @cursorCreatedAt AND id < @cursorId)
+        )
+        `
+            : ''
+        }
+    ORDER BY created_at DESC, id DESC
     LIMIT @pageSize
-    OFFSET @offset
   `;
 
-    const options = {
-        query,
-        location: 'US',
-        params: {
-            pageSize,
-            offset,
-        },
+    const params: Record<string, any> = {
+        pageSize,
+        path
     };
 
-    const [rows] = await bigquery.query(options);
+    if (hasCursor) {
+        params.cursorCreatedAt = cursor!.created_at;
+        params.cursorId = cursor!.id;
+    }
+
+    const [rows] = await bigquery.query({
+        query,
+        location: 'US',
+        params,
+    });
+
+    const articles = rows as Article[];
+
+    const last = articles[articles.length - 1];
 
     return {
-        data: rows as Article[],
-        page,
-        pageSize,
+        data: articles,
+        nextCursor: last
+            ? {
+                created_at: last.created_at,
+                id: last.id,
+            }
+            : null,
     };
 }
