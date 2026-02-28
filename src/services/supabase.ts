@@ -4,6 +4,8 @@ import { InesperadoException } from '../errors';
 import { MyTemplate } from 'ejfdelgado-common-ts';
 import { ApiResponse } from '../types';
 import { setDefaultResultOrder } from 'node:dns';
+import { General } from '../tools/General';
+import { EmbedSrv } from './embeed.service';
 
 //setDefaultResultOrder('ipv4first');
 
@@ -85,6 +87,57 @@ export class SupabaseSrv {
             data: rows,
             timestamp: new Date()
         };
+        res.status(201).json(response);
+    }
+
+    static async insertUpdateEmbeed(req: Request, res: Response) {
+        const id = General.readParam(req, "id", "", true);
+        const parent = General.readParam(req, "parent", "", true);
+        const q = General.readParam(req, "q", null, false);
+        // Crete the embed
+        const promesas: Promise<any>[] = [];
+        const sql = SupabaseSrv.getConnection();
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'ok',
+            data: null,
+            timestamp: new Date()
+        };
+
+        if (q === null) {
+            // delete
+            await sql`DELETE FROM document_embeddings WHERE id=${id} AND parent=${parent};`;
+            response.data = {
+                action: "delete",
+            };
+        } else {
+            promesas.push(new Promise(async (resolve, reject) => {
+                try {
+                    const embed = await EmbedSrv.embed(q);
+                    const embeddingString = JSON.stringify(embed);
+                    resolve(embeddingString);
+                } catch (err) {
+                    reject(err);
+                }
+            }));
+            promesas.push(sql`SELECT 1 as found from document_embeddings where id = ${id} AND parent=${parent};`);
+
+            const [embeddingString, old] = await Promise.all(promesas);
+
+            if (old.length == 0) {
+                // make an insert
+                await sql`INSERT INTO document_embeddings (id, parent, embedding) VALUES (${id}, ${parent}, ${embeddingString}::vector);`;
+            } else {
+                // make an update
+                await sql`UPDATE document_embeddings SET embedding = ${embeddingString}::vector WHERE id=${id} AND parent=${parent};`;
+            }
+
+            response.data = {
+                action: old.length == 0 ? "create" : "update",
+            };
+        }
+
         res.status(201).json(response);
     }
 };

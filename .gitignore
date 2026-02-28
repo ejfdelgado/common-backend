@@ -45,3 +45,5 @@ rundevlx.sh
 src/database/
 
 credentials/
+
+.model_cache/

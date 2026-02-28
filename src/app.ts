@@ -17,6 +17,7 @@ import { ParametersSrv } from './services/parameters';
 import { GeminiSrv } from './services/geminiSrv';
 import { EmailHandler } from './services/email';
 import { SupabaseSrv } from './services/supabase';
+import { EmbedSrv } from './services/embeed.service';
 
 let allowedOrigins = [
     'http://localhost:4200',
@@ -107,6 +108,10 @@ class App {
         this.app.post("/srv/email/send", [express.json(), asyncHandler(EmailHandler.send)]);
 
         this.app.get("/supabase/check1", [asyncHandler(SupabaseSrv.check1)]);
+        this.app.get("/supabase/create_update", [asyncHandler(SupabaseSrv.insertUpdateEmbeed)]);
+
+        this.app.get("/embed/use", [asyncHandler(EmbedSrv.use)]);
+
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
