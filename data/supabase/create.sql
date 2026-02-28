@@ -11,3 +11,5 @@ CREATE TABLE document_embeddings (
 
 -- Create an HNSW index for fast similarity search
 CREATE INDEX ON document_embeddings USING hnsw (embedding vector_cosine_ops);
+
+CREATE INDEX idx_parent ON document_embeddings (parent);
