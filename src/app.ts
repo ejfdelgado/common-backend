@@ -109,6 +109,7 @@ class App {
 
         this.app.get("/supabase/check1", [asyncHandler(SupabaseSrv.check1)]);
         this.app.get("/supabase/create_update", [asyncHandler(SupabaseSrv.insertUpdateEmbeed)]);
+        this.app.get("/supabase/search", [asyncHandler(SupabaseSrv.searchEmbeed)]);
 
         this.app.get("/embed/use", [asyncHandler(EmbedSrv.use)]);
 

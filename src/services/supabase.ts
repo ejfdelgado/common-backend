@@ -90,6 +90,34 @@ export class SupabaseSrv {
         res.status(201).json(response);
     }
 
+    static async searchEmbeed(req: Request, res: Response) {
+        const parent = General.readParam(req, "parent", "", true);
+        const q = General.readParam(req, "q", null, true);
+        const n = General.readParam(req, "n", 5, false);
+        const embed = await EmbedSrv.embed(q);
+        const embeddingString = JSON.stringify(embed);
+        const sql = SupabaseSrv.getConnection();
+
+        const results = await sql`
+        SELECT 
+            id, 
+            (embedding <=> ${embeddingString}::vector) AS distance
+        FROM document_embeddings
+        WHERE parent = ${parent}
+        ORDER BY distance ASC
+        LIMIT ${n}
+        `;
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'ok',
+            data: results,
+            timestamp: new Date()
+        };
+
+        res.status(201).json(response);
+    }
+
     static async insertUpdateEmbeed(req: Request, res: Response) {
         const id = General.readParam(req, "id", "", true);
         const parent = General.readParam(req, "parent", "", true);
