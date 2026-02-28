@@ -16,6 +16,7 @@ import { checkRole } from './middleware/firebase-role.middleware';
 import { ParametersSrv } from './services/parameters';
 import { GeminiSrv } from './services/geminiSrv';
 import { EmailHandler } from './services/email';
+import { SupabaseSrv } from './services/supabase';
 
 let allowedOrigins = [
     'http://localhost:4200',
@@ -104,6 +105,8 @@ class App {
         this.app.post('/gemini/query', asyncHandler(GeminiSrv.generate));
 
         this.app.post("/srv/email/send", [express.json(), asyncHandler(EmailHandler.send)]);
+
+        this.app.get("/supabase/check1", [asyncHandler(SupabaseSrv.check1)]);
 
         this.app.use('*', (req: Request, res: Response) => {
             const response: ApiResponse = {
