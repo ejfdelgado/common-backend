@@ -104,7 +104,7 @@ export class GeminiSrv {
         const searched: string[] = tool.args.map((arg: any) => arg.val);
 
         const completeSearch = keywords + " " + [...searched].join(" ");
-        
+
         const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
 
         if (matches.length == 0) {
@@ -117,6 +117,7 @@ export class GeminiSrv {
             name: tool.name,
             message,
             success,
+            articles: matches,
         };
     }
 
