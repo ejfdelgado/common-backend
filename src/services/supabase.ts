@@ -122,8 +122,8 @@ export class SupabaseSrv {
         const id = General.readParam(req, "id", "", true);
         const parent = General.readParam(req, "parent", "", true);
         const q = General.readParam(req, "q", null, false);
-        // Crete the embed
-        const promesas: Promise<any>[] = [];
+        const metadata = General.readParam(req, "metadata", {}, false);
+
         const sql = SupabaseSrv.getConnection();
 
         const response: ApiResponse = {
@@ -140,25 +140,23 @@ export class SupabaseSrv {
                 action: "delete",
             };
         } else {
-            promesas.push(new Promise(async (resolve, reject) => {
-                try {
-                    const embed = await EmbedSrv.embed(q);
-                    const embeddingString = JSON.stringify(embed);
-                    resolve(embeddingString);
-                } catch (err) {
-                    reject(err);
-                }
-            }));
-            promesas.push(sql`SELECT 1 as found from document_embeddings where id = ${id} AND parent=${parent};`);
-
-            const [embeddingString, old] = await Promise.all(promesas);
+            const old = await sql`SELECT embedding_txt from document_embeddings where id = ${id} AND parent=${parent};`;
 
             if (old.length == 0) {
                 // make an insert
-                await sql`INSERT INTO document_embeddings (id, parent, embedding) VALUES (${id}, ${parent}, ${embeddingString}::vector);`;
+                const embed = await EmbedSrv.embed(q);
+                const embeddingString = JSON.stringify(embed);
+                await sql`INSERT INTO document_embeddings (id, parent, embedding, embedding_txt, metadata) VALUES (${id}, ${parent}, ${embeddingString}::vector, ${q}, ${metadata});`;
             } else {
-                // make an update
-                await sql`UPDATE document_embeddings SET embedding = ${embeddingString}::vector WHERE id=${id} AND parent=${parent};`;
+                if (q != old[0].embedding_txt) {
+                    const embed = await EmbedSrv.embed(q);
+                    const embeddingString = JSON.stringify(embed);
+                    // make an update embed (txt and vector) and metadata
+                    await sql`UPDATE document_embeddings SET embedding = ${embeddingString}::vector, metadata = ${metadata}, embedding_txt = ${q} WHERE id=${id} AND parent=${parent};`;
+                } else {
+                    // make an update only of metadata
+                    await sql`UPDATE document_embeddings SET metadata = ${metadata} WHERE id=${id} AND parent=${parent};`;
+                }
             }
 
             response.data = {
@@ -167,5 +165,54 @@ export class SupabaseSrv {
         }
 
         res.status(201).json(response);
+    }
+
+    static async pageEmbeed(req: Request, res: Response) {
+        const parent = General.readParam(req, "parent", "", true);
+        const limit = General.readParam(req, "limit", 50, false);
+        const cursor = General.readParam(req, "cursor", null, false);
+
+        const sql = SupabaseSrv.getConnection();
+
+        let query: any = null;
+
+        if (cursor) {
+            // Page subsequent results
+            query = sql`
+      SELECT id, parent, created_at, metadata 
+      FROM document_embeddings
+      WHERE parent = ${parent} 
+        AND (created_at, id) < (${cursor.createdAt}, ${cursor.id})
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${limit}
+    `;
+        } else {
+            // Page the first results
+            query = sql`
+      SELECT id, parent, created_at, metadata 
+      FROM document_embeddings
+      WHERE parent = ${parent}
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${limit}
+    `;
+
+            const results = await query;
+
+            const nextCursor = results.length > 0
+                ? { createdAt: results[results.length - 1].created_at, id: results[results.length - 1].id }
+                : null;
+
+            const response: ApiResponse = {
+                success: true,
+                message: 'ok',
+                data: {
+                    rows: results,
+                    nextCursor: nextCursor,
+                },
+                timestamp: new Date()
+            };
+
+            res.status(201).json(response);
+        }
     }
 };
