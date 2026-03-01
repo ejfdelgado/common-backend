@@ -41,8 +41,3 @@ CREATE INDEX article_created_at_parent ON articles (
     created_at DESC,
     id DESC
 );
-
-
-select *
-from documents
-where fts_vector @@ websearch_to_tsquery('english', 'your search term here');

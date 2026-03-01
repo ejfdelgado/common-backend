@@ -115,6 +115,7 @@ class App {
 
         this.app.post("/articles/page", [asyncHandler(SupabaseSrv.pageArticle)]);
         this.app.post("/articles/crud", [asyncHandler(SupabaseSrv.crudArticle)]);
+        this.app.post("/articles/search", [asyncHandler(SupabaseSrv.searchArticle)]);
 
         this.app.get("/embed/use", [asyncHandler(EmbedSrv.use)]);
 

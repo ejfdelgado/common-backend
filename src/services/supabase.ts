@@ -113,6 +113,7 @@ export class SupabaseSrv {
         ORDER BY distance ASC
         LIMIT ${n}
         `;
+        SupabaseSrv.assureMetadataJson(results);
         return results.filter((row: any) => row.distance <= distance)
             .map((row: any) => { row.metadata.created = parseInt(row.created_at); return row; });
     }
@@ -358,6 +359,44 @@ export class SupabaseSrv {
             }
         }
 
+        res.status(201).json(response);
+    }
+
+    static async searchArticleInternal(
+        parent: string,
+        q: string,
+        n: number,
+    ) {
+        const sql = SupabaseSrv.getConnection();
+        const results = await sql`
+        SELECT 
+            id, 
+            metadata,
+            created_at
+        FROM articles
+        WHERE parent = ${parent}
+        AND fts_vector @@ websearch_to_tsquery('simple', ${q})
+        ORDER BY distance ASC
+        LIMIT ${n}
+        `;
+        SupabaseSrv.assureMetadataJson(results);
+        return results
+            .map((row: any) => { row.metadata.created = parseInt(row.created_at); return row; });
+    }
+
+    static async searchArticle(req: AuthenticatedRequest, res: Response) {
+        const parent = General.readParam(req, "parent", "", true);
+        const q = General.readParam(req, "q", null, true);
+        const n = General.readParam(req, "n", 1, false);
+
+        const results = await SupabaseSrv.searchArticleInternal(parent, q, n);
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'ok',
+            data: results,
+            timestamp: new Date()
+        };
         res.status(201).json(response);
     }
 };
