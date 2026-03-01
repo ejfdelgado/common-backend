@@ -108,7 +108,7 @@ export class GeminiSrv {
         const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
 
         if (matches.length == 0) {
-            message = error;
+            message = GeminiSrv.replaceArguments(error, tool.args);
         } else {
             message = GeminiSrv.replaceArguments(matches[0].desc, tool.args);
         }
