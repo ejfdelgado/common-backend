@@ -241,6 +241,8 @@ export class SupabaseSrv {
             ? { createdAt: results[results.length - 1].created_at, id: results[results.length - 1].id }
             : null;
 
+        SupabaseSrv.assureMetadataJson(results);
+
         const response: ApiResponse = {
             success: true,
             message: 'ok',
@@ -252,6 +254,16 @@ export class SupabaseSrv {
         };
 
         res.status(201).json(response);
+    }
+
+    static assureMetadataJson(results: any[]) {
+        results.forEach((el: any) => {
+            if (typeof el.metadata == "string") {
+                try {
+                    el.metadata = JSON.parse(el.metadata);
+                } catch (err) { }
+            }
+        });
     }
 
     static async pageArticle(req: AuthenticatedRequest, res: Response) {
@@ -291,6 +303,8 @@ export class SupabaseSrv {
         const nextCursor = results.length >= limit
             ? { createdAt: results[results.length - 1].created_at, id: results[results.length - 1].id }
             : null;
+
+        SupabaseSrv.assureMetadataJson(results);
 
         const response: ApiResponse = {
             success: true,
