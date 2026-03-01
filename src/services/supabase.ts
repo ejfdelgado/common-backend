@@ -149,7 +149,7 @@ export class SupabaseSrv {
         }
     }
 
-    static async insertUpdateEmbeed(req: AuthenticatedRequest, res: Response) {
+    static async crudEmbeed(req: AuthenticatedRequest, res: Response) {
         const id = General.readParam(req, "id", null, false);
         const parent = General.readParam(req, "parent", "", true);
         const q = General.readParam(req, "q", null, false);
@@ -250,6 +250,99 @@ export class SupabaseSrv {
             },
             timestamp: new Date()
         };
+
+        res.status(201).json(response);
+    }
+
+    static async pageArticle(req: AuthenticatedRequest, res: Response) {
+        const parent = General.readParam(req, "parent", "", true);
+        const limit = General.readParam(req, "limit", 50, false);
+        const cursor = General.readParam(req, "cursor", null, false);
+
+        await SupabaseSrv.checkPermissions(req, parent);
+
+        const sql = SupabaseSrv.getConnection();
+
+        let query: any = null;
+
+        if (cursor) {
+            // Page subsequent results
+            query = sql`
+      SELECT id, metadata, created_at 
+      FROM articles
+      WHERE parent = ${parent} 
+        AND (created_at, id) < (${cursor.createdAt}, ${cursor.id})
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${limit}
+    `;
+        } else {
+            // Page the first results
+            query = sql`
+      SELECT id, metadata, created_at 
+      FROM articles
+      WHERE parent = ${parent}
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${limit}
+    `;
+        }
+        let results: any[] = [];
+        results = await query;
+
+        const nextCursor = results.length >= limit
+            ? { createdAt: results[results.length - 1].created_at, id: results[results.length - 1].id }
+            : null;
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'ok',
+            data: {
+                rows: results,
+                nextCursor: nextCursor,
+            },
+            timestamp: new Date()
+        };
+
+        res.status(201).json(response);
+    }
+
+    static async crudArticle(req: AuthenticatedRequest, res: Response) {
+        const id = General.readParam(req, "id", null, false);
+        const parent = General.readParam(req, "parent", "", true);
+        const q = General.readParam(req, "q", null, false);
+        const metadata = General.readParam(req, "metadata", {}, false);
+
+        await SupabaseSrv.checkPermissions(req, parent);
+
+        const sql = SupabaseSrv.getConnection();
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'ok',
+            data: {},
+            timestamp: new Date()
+        };
+
+        if (q === null) {
+            // delete
+            if (!id || id.trim().length == 0) {
+                throw new ParametrosIncompletosException("id missed");
+            }
+            await sql`DELETE FROM articles WHERE id=${id} AND parent=${parent};`;
+            response.data.action = "delete";
+            response.data.id = id;
+        } else {
+            if (!id || id.trim().length == 0) {
+                // make an insert
+                const [insertedRow] = await sql`INSERT INTO articles (parent, keywords, metadata) VALUES (${parent}, ${q}, ${metadata}) RETURNING id, created_at;`;
+                response.data.action = "insert";
+                response.data.id = insertedRow.id;
+                response.data.created_at = insertedRow.created_at;
+            } else {
+                await sql`UPDATE articles SET keywords = ${q}, metadata = ${metadata} WHERE id=${id} AND parent=${parent};`;
+                response.data.action = "update";
+                response.data.id = id;
+            }
+        }
 
         res.status(201).json(response);
     }
