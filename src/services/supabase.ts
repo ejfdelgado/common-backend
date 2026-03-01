@@ -146,7 +146,7 @@ export class SupabaseSrv {
                 // make an insert
                 const embed = await EmbedSrv.embed(q);
                 const embeddingString = JSON.stringify(embed);
-                const [insertedRow] = await sql`INSERT INTO document_embeddings (id, parent, embedding, embedding_txt, metadata) VALUES (${id}, ${parent}, ${embeddingString}::vector, ${q}, ${metadata}) RETURNING id, created_at;`;
+                const [insertedRow] = await sql`INSERT INTO document_embeddings (parent, embedding, embedding_txt, metadata) VALUES (${parent}, ${embeddingString}::vector, ${q}, ${metadata}) RETURNING id, created_at;`;
                 response.data.action = "insert";
                 response.data.id = insertedRow.id;
                 response.data.created_at = insertedRow.created_at;
@@ -198,24 +198,24 @@ export class SupabaseSrv {
       ORDER BY created_at DESC, id DESC
       LIMIT ${limit}
     `;
-
-            const results = await query;
-
-            const nextCursor = results.length > 0
-                ? { createdAt: results[results.length - 1].created_at, id: results[results.length - 1].id }
-                : null;
-
-            const response: ApiResponse = {
-                success: true,
-                message: 'ok',
-                data: {
-                    rows: results,
-                    nextCursor: nextCursor,
-                },
-                timestamp: new Date()
-            };
-
-            res.status(201).json(response);
         }
+        let results: any[] = [];
+        results = await query;
+
+        const nextCursor = results.length >= limit
+            ? { createdAt: results[results.length - 1].created_at, id: results[results.length - 1].id }
+            : null;
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'ok',
+            data: {
+                rows: results,
+                nextCursor: nextCursor,
+            },
+            timestamp: new Date()
+        };
+
+        res.status(201).json(response);
     }
 };
