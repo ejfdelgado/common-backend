@@ -146,12 +146,13 @@ export class SupabaseSrv {
                 // make an insert
                 const embed = await EmbedSrv.embed(q);
                 const embeddingString = JSON.stringify(embed);
-                const [insertedRow] = await sql`INSERT INTO document_embeddings (id, parent, embedding, embedding_txt, metadata) VALUES (${id}, ${parent}, ${embeddingString}::vector, ${q}, ${metadata}) RETURNING id;`;
+                const [insertedRow] = await sql`INSERT INTO document_embeddings (id, parent, embedding, embedding_txt, metadata) VALUES (${id}, ${parent}, ${embeddingString}::vector, ${q}, ${metadata}) RETURNING id, created_at;`;
                 response.data.action = "insert";
                 response.data.id = insertedRow.id;
+                response.data.created_at = insertedRow.created_at;
             } else {
                 const old = await sql`SELECT embedding_txt from document_embeddings where id = ${id} AND parent=${parent};`;
-
+                // Is there a risk it may not exists?
                 if (q != old[0].embedding_txt) {
                     const embed = await EmbedSrv.embed(q);
                     const embeddingString = JSON.stringify(embed);
