@@ -1,17 +1,18 @@
 import { Request, Response } from 'express';
 import { ApiResponse, AuthenticatedRequest } from '../types';
-import { GenerateContentResponse, GoogleGenAI, Schema, ToolUnion, Type, type GenerateContentConfig } from "@google/genai";
+import { Content, GenerateContentResponse, GoogleGenAI, Schema, ToolUnion, Type, type GenerateContentConfig } from "@google/genai";
 import { InesperadoException, NoAutorizadoException } from '../errors';
 import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
 import { EmailHandler } from './email';
 import { marked } from 'marked';
+import { SupabaseSrv } from './supabase';
 
 const renderer: any = {
-  link({ href, raw, text, tokens, type }: any) {
-    return `<a href="${href}" title="${text ?? ''}" target="_blank">${text}</a>`;
-    return "";
-  }
+    link({ href, raw, text, tokens, type }: any) {
+        return `<a href="${href}" title="${text ?? ''}" target="_blank">${text}</a>`;
+        return "";
+    }
 };
 
 marked.use({ renderer });
@@ -108,7 +109,7 @@ export class GeminiSrv {
         let message = GeminiSrv.replaceArguments(tool.ok, tool.args);
         try {
             // Iterate history to use MD when needed
-            history.forEach((message)=>{
+            history.forEach((message) => {
                 if (message.role == 'model') {
                     if (message.parts[0].text) {
                         message.parts[0].text = marked.parse(message.parts[0].text);
@@ -135,7 +136,7 @@ export class GeminiSrv {
     }
 
     static async generate(req: Request, res: Response) {
-        const { history, config, pass, author, tools } = req.body;
+        const { history, config, pass, author, tools, extra } = req.body;
         const castedConfig: GenerateContentConfig = config;
         const mapedTools = GeminiSrv.mapTools(tools);
         // Decript the pass with the private key
@@ -150,8 +151,35 @@ export class GeminiSrv {
         if (!decriptedKey || decriptedKey.length != 20) {
             throw new Error("");
         }
+
+        let retrievedFacts: string[] = [];
+        const embedMatches = await SupabaseSrv.searchEmbeedInternal(extra.assistantId, extra.q, extra.distance, extra.top);
+        const searchedResult = embedMatches.map((el: any) => {
+            return {
+                metadata: el.metadata,
+                distance: el.distance,
+            };
+        });
+        retrievedFacts = searchedResult.map((el: any) => {
+            if (el.metadata.type == "question") {
+                return el.metadata.answerFormat ? el.metadata.answerFormat : el.metadata.txtFormat;
+            } else {
+                return el.metadata.txtFormat;
+            }
+        });
+        const contextBlock = retrievedFacts.length > 0
+            ? `[CONTEXT DATA]\n${retrievedFacts.join("\n")}\n\n[USER QUESTION]\n`
+            : "";
+
+        const userMessage: Content = {
+            role: "user",
+            parts: [{ text: contextBlock + extra.q }]
+        };
+
+        const usedHistory = [...history, userMessage];
+
         castedConfig.tools = mapedTools;
-        const answer = await GeminiSrv.generateContent(history, castedConfig, author);
+        const answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
 
         const getToolByName = (name: string) => {
             return tools.find((tool: any) => normalizeName(tool.name) == name);
@@ -186,6 +214,7 @@ export class GeminiSrv {
             data: {
                 result: answer,
                 toolsStatus,
+                searchedResult,
             },
             timestamp: new Date()
         };

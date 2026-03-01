@@ -91,10 +91,13 @@ export class SupabaseSrv {
         res.status(201).json(response);
     }
 
-    static async searchEmbeed(req: Request, res: Response) {
-        const parent = General.readParam(req, "parent", "", true);
-        const q = General.readParam(req, "q", null, true);
-        const n = General.readParam(req, "n", 5, false);
+    static async searchEmbeedInternal(
+        parent: string,
+        q: string,
+        distance: number,
+        n: number,
+
+    ) {
         const embed = await EmbedSrv.embed(q);
         const embeddingString = JSON.stringify(embed);
         const sql = SupabaseSrv.getConnection();
@@ -102,12 +105,25 @@ export class SupabaseSrv {
         const results = await sql`
         SELECT 
             id, 
-            (embedding <=> ${embeddingString}::vector) AS distance
+            (embedding <=> ${embeddingString}::vector) AS distance,
+            metadata,
+            created_at
         FROM document_embeddings
         WHERE parent = ${parent}
         ORDER BY distance ASC
         LIMIT ${n}
         `;
+        return results.filter((row: any) => row.distance <= distance)
+            .map((row: any) => { row.metadata.created = parseInt(row.created_at); return row; });
+    }
+
+    static async searchEmbeed(req: Request, res: Response) {
+        const parent = General.readParam(req, "parent", "", true);
+        const q = General.readParam(req, "q", null, true);
+        const distance = parseFloat(General.readParam(req, "distance", "1", true));
+        const n = parseInt(General.readParam(req, "n", 5, false));
+
+        const results = await SupabaseSrv.searchEmbeedInternal(parent, q, distance, n);
 
         const response: ApiResponse = {
             success: true,
