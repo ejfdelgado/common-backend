@@ -96,6 +96,30 @@ export class GeminiSrv {
         return rendered;
     }
 
+    static async searchArticle(tool: any, history: any[], assistantId: string) {
+        const { error, keywords } = tool;
+        const success: boolean = true;
+        let message = "";
+
+        const searched: string[] = tool.args.map((arg: any) => arg.val);
+
+        const completeSearch = keywords + " " + [...searched].join(" ");
+        
+        const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
+
+        if (matches.length == 0) {
+            message = error;
+        } else {
+            message = GeminiSrv.replaceArguments(matches[0].desc, tool.args);
+        }
+
+        return {
+            name: tool.name,
+            message,
+            success,
+        };
+    }
+
     static async sendEmail(tool: any, history: any[], template: string = "mails/chat_history_orig.html") {
         // Simplify last message:
         if (history[history.length - 1].parts.length > 0) {
@@ -202,6 +226,8 @@ export class GeminiSrv {
                         });
                         if (tool.type == "mail") {
                             toolsStatus.push(await GeminiSrv.sendEmail(tool, history));
+                        } else if (tool.type == "article") {
+                            toolsStatus.push(await GeminiSrv.searchArticle(tool, history, extra.assistantId));
                         }
                     }
                 }

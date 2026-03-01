@@ -10,6 +10,46 @@ import { MyStore } from './firestore';
 
 //setDefaultResultOrder('ipv4first');
 
+const EN_STOPWORDS = new Set([
+    "of", "the", "to", "and", "a", "an", "in", "on", "at", "for", "with",
+    "by", "from", "about", "as", "into", "like", "through", "after",
+    "over", "between", "out", "against", "during", "without", "before",
+    "under", "around", "among"
+]);
+
+const ES_STOPWORDS = new Set([
+    "de", "la", "el", "los", "las", "un", "una", "unos", "unas",
+    "y", "o", "en", "con", "por", "para", "del", "al",
+    "que", "como", "más", "pero", "sus", "le", "ya", "si",
+    "porque", "esta", "este", "estos", "estas"
+]);
+
+const STOPWORDS = new Set([...EN_STOPWORDS, ...ES_STOPWORDS]);
+
+export function preprocessSearchText(input: string): string {
+    if (!input) return "";
+
+    return input
+        // Normalize accents (á → a, ñ → n)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+
+        // Lowercase
+        .toLowerCase()
+
+        // Remove punctuation
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+
+        // Split into tokens
+        .split(/\s+/)
+
+        // Remove empty, short tokens, and stopwords
+        .filter(word =>
+            word.length > 2 &&
+            !STOPWORDS.has(word)
+        ).join(" ");
+}
+
 export class SupabaseSrv {
 
     static renderer = new MyTemplate();
@@ -323,7 +363,7 @@ export class SupabaseSrv {
     static async crudArticle(req: AuthenticatedRequest, res: Response) {
         const id = General.readParam(req, "id", null, false);
         const parent = General.readParam(req, "parent", "", true);
-        const q = General.readParam(req, "q", null, false);
+        const q1 = General.readParam(req, "q", null, false);
         const metadata = General.readParam(req, "metadata", {}, false);
 
         await SupabaseSrv.checkPermissions(req, parent);
@@ -337,7 +377,7 @@ export class SupabaseSrv {
             timestamp: new Date()
         };
 
-        if (q === null) {
+        if (q1 === null) {
             // delete
             if (!id || id.trim().length == 0) {
                 throw new ParametrosIncompletosException("id missed");
@@ -346,6 +386,7 @@ export class SupabaseSrv {
             response.data.action = "delete";
             response.data.id = id;
         } else {
+            const q = preprocessSearchText(q1);
             if (!id || id.trim().length == 0) {
                 // make an insert
                 const [insertedRow] = await sql`INSERT INTO articles (parent, keywords, metadata) VALUES (${parent}, ${q}, ${metadata}) RETURNING id, created_at;`;
@@ -364,9 +405,10 @@ export class SupabaseSrv {
 
     static async searchArticleInternal(
         parent: string,
-        q: string,
+        q1: string,
         n: number,
     ) {
+        const q = preprocessSearchText(q1);
         const sql = SupabaseSrv.getConnection();
         const results = await sql`
         SELECT 
