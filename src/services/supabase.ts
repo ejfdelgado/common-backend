@@ -1,6 +1,6 @@
 import postgres from 'postgres';
 import { Request, Response } from 'express';
-import { InesperadoException } from '../errors';
+import { InesperadoException, ParametrosIncompletosException } from '../errors';
 import { MyTemplate } from 'ejfdelgado-common-ts';
 import { ApiResponse } from '../types';
 import { setDefaultResultOrder } from 'node:dns';
@@ -119,7 +119,7 @@ export class SupabaseSrv {
     }
 
     static async insertUpdateEmbeed(req: Request, res: Response) {
-        const id = General.readParam(req, "id", "", true);
+        const id = General.readParam(req, "id", null, false);
         const parent = General.readParam(req, "parent", "", true);
         const q = General.readParam(req, "q", null, false);
         const metadata = General.readParam(req, "metadata", {}, false);
@@ -129,25 +129,29 @@ export class SupabaseSrv {
         const response: ApiResponse = {
             success: true,
             message: 'ok',
-            data: null,
+            data: {},
             timestamp: new Date()
         };
 
         if (q === null) {
             // delete
+            if (!id) {
+                throw new ParametrosIncompletosException("id missed");
+            }
             await sql`DELETE FROM document_embeddings WHERE id=${id} AND parent=${parent};`;
-            response.data = {
-                action: "delete",
-            };
+            response.data.action = "delete";
+            response.data.id = id;
         } else {
-            const old = await sql`SELECT embedding_txt from document_embeddings where id = ${id} AND parent=${parent};`;
-
-            if (old.length == 0) {
+            if (!id) {
                 // make an insert
                 const embed = await EmbedSrv.embed(q);
                 const embeddingString = JSON.stringify(embed);
-                await sql`INSERT INTO document_embeddings (id, parent, embedding, embedding_txt, metadata) VALUES (${id}, ${parent}, ${embeddingString}::vector, ${q}, ${metadata});`;
+                const [insertedRow] = await sql`INSERT INTO document_embeddings (id, parent, embedding, embedding_txt, metadata) VALUES (${id}, ${parent}, ${embeddingString}::vector, ${q}, ${metadata}) RETURNING id;`;
+                response.data.action = "insert";
+                response.data.id = insertedRow.id;
             } else {
+                const old = await sql`SELECT embedding_txt from document_embeddings where id = ${id} AND parent=${parent};`;
+
                 if (q != old[0].embedding_txt) {
                     const embed = await EmbedSrv.embed(q);
                     const embeddingString = JSON.stringify(embed);
@@ -157,11 +161,9 @@ export class SupabaseSrv {
                     // make an update only of metadata
                     await sql`UPDATE document_embeddings SET metadata = ${metadata} WHERE id=${id} AND parent=${parent};`;
                 }
+                response.data.action = "update";
+                response.data.id = id;
             }
-
-            response.data = {
-                action: old.length == 0 ? "create" : "update",
-            };
         }
 
         res.status(201).json(response);
