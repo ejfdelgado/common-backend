@@ -376,18 +376,19 @@ export class SupabaseSrv {
         FROM articles
         WHERE parent = ${parent}
         AND fts_vector @@ websearch_to_tsquery('simple', ${q})
-        ORDER BY distance ASC
         LIMIT ${n}
         `;
         SupabaseSrv.assureMetadataJson(results);
         return results
-            .map((row: any) => { row.metadata.created = parseInt(row.created_at); return row; });
+            .map((row: any) => { row.metadata.created = parseInt(row.created_at); return row.metadata; });
     }
 
     static async searchArticle(req: AuthenticatedRequest, res: Response) {
         const parent = General.readParam(req, "parent", "", true);
         const q = General.readParam(req, "q", null, true);
         const n = General.readParam(req, "n", 1, false);
+
+        await SupabaseSrv.checkPermissions(req, parent);
 
         const results = await SupabaseSrv.searchArticleInternal(parent, q, n);
 
