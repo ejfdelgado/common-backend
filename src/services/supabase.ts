@@ -1,11 +1,12 @@
 import postgres from 'postgres';
 import { Request, Response } from 'express';
-import { InesperadoException, ParametrosIncompletosException } from '../errors';
+import { InesperadoException, NoAutorizadoException, ParametrosIncompletosException } from '../errors';
 import { MyTemplate } from 'ejfdelgado-common-ts';
-import { ApiResponse } from '../types';
+import { ApiResponse, AuthenticatedRequest } from '../types';
 import { setDefaultResultOrder } from 'node:dns';
 import { General } from '../tools/General';
 import { EmbedSrv } from './embeed.service';
+import { MyStore } from './firestore';
 
 //setDefaultResultOrder('ipv4first');
 
@@ -118,11 +119,27 @@ export class SupabaseSrv {
         res.status(201).json(response);
     }
 
-    static async insertUpdateEmbeed(req: Request, res: Response) {
+    static async checkPermissions(req: AuthenticatedRequest, parentId: string) {
+        if (!req.user?.uid) {
+            throw new NoAutorizadoException("No user");
+        }
+        // Check permission over parent collection
+        const oldDoc = await MyStore.readById("knowledge", parentId);
+        if (oldDoc.owners instanceof Array) {
+            // Check current user is in
+            if (!req.user?.uid || oldDoc.owners.indexOf(req.user.uid) < 0) {
+                throw new NoAutorizadoException("Not owner");
+            }
+        }
+    }
+
+    static async insertUpdateEmbeed(req: AuthenticatedRequest, res: Response) {
         const id = General.readParam(req, "id", null, false);
         const parent = General.readParam(req, "parent", "", true);
         const q = General.readParam(req, "q", null, false);
         const metadata = General.readParam(req, "metadata", {}, false);
+
+        await SupabaseSrv.checkPermissions(req, parent);
 
         const sql = SupabaseSrv.getConnection();
 
@@ -170,10 +187,12 @@ export class SupabaseSrv {
         res.status(201).json(response);
     }
 
-    static async pageEmbeed(req: Request, res: Response) {
+    static async pageEmbeed(req: AuthenticatedRequest, res: Response) {
         const parent = General.readParam(req, "parent", "", true);
         const limit = General.readParam(req, "limit", 50, false);
         const cursor = General.readParam(req, "cursor", null, false);
+
+        await SupabaseSrv.checkPermissions(req, parent);
 
         const sql = SupabaseSrv.getConnection();
 
