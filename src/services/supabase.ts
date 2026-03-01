@@ -135,14 +135,14 @@ export class SupabaseSrv {
 
         if (q === null) {
             // delete
-            if (!id) {
+            if (!id || id.trim().length == 0) {
                 throw new ParametrosIncompletosException("id missed");
             }
             await sql`DELETE FROM document_embeddings WHERE id=${id} AND parent=${parent};`;
             response.data.action = "delete";
             response.data.id = id;
         } else {
-            if (!id) {
+            if (!id || id.trim().length == 0) {
                 // make an insert
                 const embed = await EmbedSrv.embed(q);
                 const embeddingString = JSON.stringify(embed);
@@ -181,7 +181,7 @@ export class SupabaseSrv {
         if (cursor) {
             // Page subsequent results
             query = sql`
-      SELECT id, parent, created_at, metadata 
+      SELECT id, metadata, created_at 
       FROM document_embeddings
       WHERE parent = ${parent} 
         AND (created_at, id) < (${cursor.createdAt}, ${cursor.id})
@@ -191,7 +191,7 @@ export class SupabaseSrv {
         } else {
             // Page the first results
             query = sql`
-      SELECT id, parent, created_at, metadata 
+      SELECT id, metadata, created_at 
       FROM document_embeddings
       WHERE parent = ${parent}
       ORDER BY created_at DESC, id DESC

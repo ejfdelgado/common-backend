@@ -108,7 +108,7 @@ class App {
         this.app.post("/srv/email/send", [express.json(), asyncHandler(EmailHandler.send)]);
 
         this.app.get("/supabase/check1", [asyncHandler(SupabaseSrv.check1)]);
-        this.app.post("/supabase/create_update", [asyncHandler(SupabaseSrv.insertUpdateEmbeed)]);
+        this.app.post("/supabase/crud", [asyncHandler(SupabaseSrv.insertUpdateEmbeed)]);
         this.app.post("/supabase/search", [asyncHandler(SupabaseSrv.searchEmbeed)]);
         this.app.post("/supabase/page", [asyncHandler(SupabaseSrv.pageEmbeed)]);
 
