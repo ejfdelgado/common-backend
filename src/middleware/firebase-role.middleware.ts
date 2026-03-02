@@ -2,6 +2,19 @@ import admin from 'firebase-admin';
 import { AuthenticatedRequest } from '../types';
 import { NextFunction, Response } from 'express';
 
+export function isAuthenticated() {
+    return async (
+        req: AuthenticatedRequest,
+        res: Response,
+        next: NextFunction
+    ) => {
+        if (!req.user) {
+            return res.status(500).json({ error: 'Auth required!' });
+        }
+        next();
+    }
+}
+
 export function checkRole(requiredRoles: string[]) {
     return async (
         req: AuthenticatedRequest,

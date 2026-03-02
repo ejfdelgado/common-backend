@@ -12,7 +12,7 @@ import { FirestoreWeb } from './services/firestoreWeb';
 import { firebaseAuthMiddleware } from './middleware/firebase-auth.middleware';
 import { TemplatesSrv } from './services/templates';
 import { RolesAdminSrv } from './services/rolesAdmin';
-import { checkRole } from './middleware/firebase-role.middleware';
+import { checkRole, isAuthenticated } from './middleware/firebase-role.middleware';
 import { ParametersSrv } from './services/parameters';
 import { GeminiSrv } from './services/geminiSrv';
 import { EmailHandler } from './services/email';
@@ -92,31 +92,32 @@ class App {
 
         this.app.get('/social', asyncHandler(TemplatesSrv.socialShare));
 
-        this.app.get('/admin/users', asyncHandler(RolesAdminSrv.pageUsers));
-        this.app.get('/admin/user/roles', checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.listRoles));
-        this.app.put('/admin/user/roles', checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.addRole));
-        this.app.put('/admin/user/roles_all', checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.setRoles));
-        this.app.delete('/admin/user/roles', checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.removeRole));
+        this.app.get('/admin/users', [isAuthenticated(), asyncHandler(RolesAdminSrv.pageUsers)]);
+        this.app.get('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.listRoles)]);
+        this.app.put('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.addRole)]);
+        this.app.put('/admin/user/roles_all', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.setRoles)]);
+        this.app.delete('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.removeRole)]);
 
-        this.app.post('/params/all', asyncHandler(ParametersSrv.read));
-        this.app.get('/params/generate', asyncHandler(ParametersSrv.generateKeyPair));
-        this.app.get('/params/public_key', asyncHandler(ParametersSrv.getPublicKey));
+        this.app.post('/params/all', [asyncHandler(ParametersSrv.read)]);
+        this.app.get('/params/generate', [checkRole(["developer"]), asyncHandler(ParametersSrv.generateKeyPair)]);
+        this.app.get('/params/public_key', [asyncHandler(ParametersSrv.getPublicKey)]);
 
+        // This is public, danger!
         this.app.post('/gemini/query', asyncHandler(GeminiSrv.generate));
 
-        this.app.post("/srv/email/send", [express.json(), asyncHandler(EmailHandler.send)]);
+        this.app.post("/srv/email/send", [checkRole(["developer"]), asyncHandler(EmailHandler.send)]);
 
         this.app.get("/supabase/check1", [asyncHandler(SupabaseSrv.check1)]);
 
-        this.app.post("/supabase/page", [asyncHandler(SupabaseSrv.pageEmbeed)]);
-        this.app.post("/supabase/crud", [asyncHandler(SupabaseSrv.crudEmbeed)]);
-        this.app.post("/supabase/search", [asyncHandler(SupabaseSrv.searchEmbeed)]);
+        this.app.post("/supabase/page", [checkRole(["alterego_editor", "alterego_viewer"]), asyncHandler(SupabaseSrv.pageEmbeed)]);
+        this.app.post("/supabase/crud", [checkRole(["alterego_editor"]), asyncHandler(SupabaseSrv.crudEmbeed)]);
+        this.app.post("/supabase/search", [checkRole(["alterego_editor", "alterego_viewer"]), asyncHandler(SupabaseSrv.searchEmbeed)]);
 
-        this.app.post("/articles/page", [asyncHandler(SupabaseSrv.pageArticle)]);
-        this.app.post("/articles/crud", [asyncHandler(SupabaseSrv.crudArticle)]);
-        this.app.post("/articles/search", [asyncHandler(SupabaseSrv.searchArticle)]);
+        this.app.post("/articles/page", [checkRole(["alterego_editor", "alterego_viewer"]), asyncHandler(SupabaseSrv.pageArticle)]);
+        this.app.post("/articles/crud", [checkRole(["alterego_editor"]), asyncHandler(SupabaseSrv.crudArticle)]);
+        this.app.post("/articles/search", [checkRole(["alterego_editor", "alterego_viewer"]), asyncHandler(SupabaseSrv.searchArticle)]);
 
-        this.app.get("/embed/use", [asyncHandler(EmbedSrv.use)]);
+        this.app.get("/embed/use", [checkRole(["developer"]), asyncHandler(EmbedSrv.use)]);
 
 
         this.app.use('*', (req: Request, res: Response) => {
