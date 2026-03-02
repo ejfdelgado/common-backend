@@ -94,6 +94,8 @@ class App {
 
         this.app.get('/admin/users', [isAuthenticated(), asyncHandler(RolesAdminSrv.pageUsers)]);
         this.app.get('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.listRoles)]);
+        this.app.get('/admin/user/shared_with', [isAuthenticated(), asyncHandler(RolesAdminSrv.getUsersAllowed)]);
+
         this.app.put('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.addRole)]);
         this.app.put('/admin/user/roles_all', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.setRoles)]);
         this.app.delete('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.removeRole)]);

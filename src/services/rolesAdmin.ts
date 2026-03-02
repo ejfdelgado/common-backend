@@ -2,6 +2,8 @@ import admin from 'firebase-admin';
 import { Response } from 'express';
 import { ApiResponse, AuthenticatedRequest } from '../types';
 import { General } from '../tools/General';
+import { MyStore } from './firestore';
+import { NoAutorizadoException } from '../errors';
 
 export class RolesAdminSrv {
 
@@ -107,6 +109,38 @@ export class RolesAdminSrv {
             success: true,
             message: 'Ok',
             data: true,
+            timestamp: new Date()
+        };
+        res.status(200).json(response);
+    }
+
+    static async getUsersAllowed(req: AuthenticatedRequest, res: Response) {
+        const collection = General.readParam(req, "collection", "", true);
+        const id = General.readParam(req, "id", "", true);
+        const oldDoc = await MyStore.readById(collection, id);
+        if (!(oldDoc.owners instanceof Array)) {
+            oldDoc.owners = [];
+        }
+        // Check current user is in
+        if (!req.user?.uid || oldDoc.owners.indexOf(req.user.uid) < 0) {
+            throw new NoAutorizadoException("Not owner");
+        }
+        const uids = oldDoc.owners;
+        const users = [];
+        for (let i = 0; i < uids.length; i++) {
+            const uid = uids[i];
+            const user = await admin.auth().getUser(uid);
+            users.push({
+                uid,
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+            });
+        }
+        const response: ApiResponse = {
+            success: true,
+            message: 'Ok',
+            data: users,
             timestamp: new Date()
         };
         res.status(200).json(response);
