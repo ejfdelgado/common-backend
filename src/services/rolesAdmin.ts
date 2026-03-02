@@ -114,6 +114,31 @@ export class RolesAdminSrv {
         res.status(200).json(response);
     }
 
+    static async writeUsersAllowed(req: AuthenticatedRequest, res: Response) {
+        const collection = General.readParam(req, "collection", "", true);
+        const id = General.readParam(req, "id", "", true);
+        const owners = General.readParam(req, "owners", [], true);
+        const oldDoc = await MyStore.readById(collection, id);
+        if (!(oldDoc.owners instanceof Array)) {
+            oldDoc.owners = [];
+        }
+        if (!req.user?.uid || oldDoc.owners.indexOf(req.user.uid) < 0) {
+            throw new NoAutorizadoException("Not owner");
+        }
+        if (owners.indexOf(req.user?.uid) < 0) {
+            // All the time the user will be in
+            owners.push(req.user?.uid);
+        }
+        MyStore.updateById(collection, id, { owners })
+        const response: ApiResponse = {
+            success: true,
+            message: 'Ok',
+            data: true,
+            timestamp: new Date()
+        };
+        res.status(200).json(response);
+    }
+
     static async getUsersAllowed(req: AuthenticatedRequest, res: Response) {
         const collection = General.readParam(req, "collection", "", true);
         const id = General.readParam(req, "id", "", true);
