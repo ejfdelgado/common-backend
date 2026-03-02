@@ -93,4 +93,22 @@ export class RolesAdminSrv {
         };
         res.status(200).json(response);
     }
+
+    static async setRoles(req: AuthenticatedRequest, res: Response) {
+        const uid = General.readParam(req, "uid", null, true);
+        const roles = General.readParam(req, "roles", null, true);
+
+        const currentClaims: { [key: string]: boolean } = {};
+        roles.forEach((rol: string) => {
+            currentClaims[rol] = true;
+        })
+        await admin.auth().setCustomUserClaims(uid, currentClaims);
+        const response: ApiResponse = {
+            success: true,
+            message: 'Ok',
+            data: true,
+            timestamp: new Date()
+        };
+        res.status(200).json(response);
+    }
 }

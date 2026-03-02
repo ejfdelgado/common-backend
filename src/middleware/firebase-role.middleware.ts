@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { NextFunction, Response } from 'express';
 
 export function checkRole(requiredRoles: string[]) {
-    return (
+    return async (
         req: AuthenticatedRequest,
         res: Response,
         next: NextFunction
@@ -12,11 +12,12 @@ export function checkRole(requiredRoles: string[]) {
             return res.status(500).json({ error: 'Auth middleware missing!' });
         }
 
-        // Check if the user has AT LEAST ONE of the required roles
-        // This assumes roles are stored as boolean keys like { admin: true }
-        //const hasRole = requiredRoles.some(role => req.user?[role] === true);
-        console.log(JSON.stringify(req.user, null, 4));
-        const hasRole = true;
+        const user = await admin.auth().getUser(req.user.uid);
+        let currentClaims = user.customClaims || {};
+        if (process.env.SUPERADMIN_EMAIL == user.email) {
+            currentClaims["superadmin"] = true;
+        }
+        const hasRole = requiredRoles.some(role => role in currentClaims);
 
         if (hasRole) {
             next(); // User is authorized!
