@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, AssistantStateType, AuthenticatedRequest, ToolDataType, ToolResponseType } from '../types';
+import { ApiResponse, AssistantStateType, ToolDataType, ToolResponseType } from '../types';
 import {
     Content,
     GenerateContentResponse,
@@ -289,6 +289,7 @@ export class GeminiSrv {
         const reportHistory = [...historyNoNull, simpleMessage];
 
         castedConfig.tools = mapedTools;
+        //console.log(JSON.stringify(mapedTools, null, 4));
         const answers: any[] = [];
         let answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
         answers.push(answer);
@@ -325,6 +326,11 @@ export class GeminiSrv {
                             toolResponse = await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId);
                         } else if (tool.type == "article") {
                             toolResponse = await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q);
+                        } else {
+                            toolResponse = {
+                                name: call.name,
+                                message: "",
+                            };
                         }
                         if (toolResponse) {
                             toolsStatus.push(toolResponse);
@@ -345,6 +351,8 @@ export class GeminiSrv {
             answer = await GeminiSrv.generateContent(secondLoopHistory, castedConfig, author);
             answers.push(answer);
         }
+
+        //console.log(JSON.stringify(answers, null, 4));
 
         const response: ApiResponse = {
             success: true,
