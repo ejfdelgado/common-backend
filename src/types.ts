@@ -67,3 +67,25 @@ export interface ToolDataType extends SimpleDataType {
     template?: string;
     args: ArgumentDataType[];
 };
+
+export type SearchLangsType = "en" | "es" | "multi";
+
+export interface AssistantDataType extends BasicDataType {
+    image: string;
+    top: number;
+    distance: number;
+    language: SearchLangsType;
+    instruct: string;
+    startConversation?: string;
+    knowledge_path?: string;
+    instagram?: string;
+    facebook?: string;
+    youtube?: string;
+    tiktok?: string;
+    linkedin?: string;
+    whatsapp?: any;
+    whatsapp_msg?: string;
+    emoji?: string;
+    maxHistory: number;
+    useFacts?: boolean;
+}

@@ -218,7 +218,16 @@ export class GeminiSrv {
     }
 
     static async generate(req: Request, res: Response) {
-        const { history, config, pass, author, tools, extra, state } = req.body;
+        const {
+            history,
+            config,
+            pass,
+            author,
+            tools,
+            extra,
+            state,
+            useFacts,
+        } = req.body;
         const historyNoNull: any[] = history instanceof Array ? history : [];
         //console.log(JSON.stringify(state, null, 4));
         const castedConfig: GenerateContentConfig = config;
@@ -237,20 +246,25 @@ export class GeminiSrv {
         }
 
         let retrievedFacts: string[] = [];
-        const embedMatches = await SupabaseSrv.searchEmbeedInternal(extra.assistantId, extra.q, extra.distance, extra.top);
-        const searchedResult = embedMatches.map((el: any) => {
-            return {
-                metadata: el.metadata,
-                distance: el.distance,
-            };
-        });
-        retrievedFacts = searchedResult.map((el: any) => {
-            if (el.metadata.type == "question") {
-                return el.metadata.answerFormat ? el.metadata.answerFormat : el.metadata.txtFormat;
-            } else {
-                return el.metadata.txtFormat;
-            }
-        });
+        let searchedResult: any[] = [];
+
+        if (useFacts === true) {
+            const embedMatches = await SupabaseSrv.searchEmbeedInternal(extra.assistantId, extra.q, extra.distance, extra.top);
+            searchedResult = embedMatches.map((el: any) => {
+                return {
+                    metadata: el.metadata,
+                    distance: el.distance,
+                };
+            });
+            retrievedFacts = searchedResult.map((el: any) => {
+                if (el.metadata.type == "question") {
+                    return el.metadata.answerFormat ? el.metadata.answerFormat : el.metadata.txtFormat;
+                } else {
+                    return el.metadata.txtFormat;
+                }
+            });
+        }
+
         const contextBlock = retrievedFacts.length > 0
             ? `[CONTEXT DATA]\n${retrievedFacts.join("\n")}\n\n[USER QUESTION]\n`
             : "";
