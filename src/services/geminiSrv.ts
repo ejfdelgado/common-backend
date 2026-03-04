@@ -113,6 +113,14 @@ export class GeminiSrv {
 
         if (matches.length == 0) {
             message = GeminiSrv.replaceArguments(error, tool.args);
+            // No need to wait, maybe...
+            MyStore.create(`knowledge/${assistantId}/history`, {
+                checked: false,
+                type: "not_found",
+                search: completeSearch,
+                desc: tool.name,
+                created: Date.now(),
+            });
         } else {
             message = GeminiSrv.replaceArguments(matches[0].desc, tool.args);
         }
@@ -125,7 +133,14 @@ export class GeminiSrv {
         };
     }
 
-    static async sendEmail(tool: ToolDataType, history: any[], state: AssistantStateType, author: string, assistantId: string, template: string = "mails/chat_history_orig.html") {
+    static async sendEmail(
+        tool: ToolDataType,
+        history: any[],
+        state: AssistantStateType,
+        author: string,
+        assistantId: string,
+        template: string = "mails/chat_history_orig.html",
+    ) {
         // Simplify last message:
         if (history.length > 0 && history[history.length - 1].parts.length > 0) {
             let lastMessage = history[history.length - 1].parts[0].text;
@@ -150,11 +165,17 @@ export class GeminiSrv {
             const stateList: any[] = [];
             keys.forEach((k) => {
                 stateList.push({ key: k, val: JSON.stringify(SimpleObj.getValue(state, k)) })
-            })
+            });
+
+            let customTemplate = template;
+            if (typeof tool.template == "string" && tool.template.trim().length > 0) {
+                customTemplate = tool.template.trim();
+            }
+
             const response = await EmailHandler.sendInternal({
                 params: { tool, history, state, stateList },
                 subject: `Assistant - ${tool.name}`,
-                template: template,
+                template: customTemplate,
                 to: tool.to,
             }, true, undefined, false, false);
 
@@ -173,7 +194,7 @@ export class GeminiSrv {
             // Insert on history
             promises.push(MyStore.create(`knowledge/${assistantId}/history`, {
                 checked: false,
-                type: tool.type,
+                type: tool.type,//email always
                 desc: tool.name,
                 created: Date.now(),
                 reportId: path,

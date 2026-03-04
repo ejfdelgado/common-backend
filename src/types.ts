@@ -64,5 +64,6 @@ export interface ToolDataType extends SimpleDataType {
     nextState?: string;
     useStates?: boolean;
     affectModel?: boolean;
+    template?: string;
     args: ArgumentDataType[];
 };
