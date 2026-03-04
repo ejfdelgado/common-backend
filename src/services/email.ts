@@ -112,4 +112,24 @@ export class EmailHandler {
       res.status(200).json(answer).end();
     }
   }
+
+  static async contactUs(req: Request, res: Response) {
+    const form = General.readParam(req, "form");
+
+    const response = await EmailHandler.sendInternal({
+      params: { form },
+      subject: `Contact!`,
+      template: "mails/contact_us_orig.html",
+      to: process.env.EMAIL_CONTACT_US,
+    }, true, undefined, false);
+
+    const answer: ApiResponse = {
+      success: true,
+      message: 'Ok',
+      data: null,
+      timestamp: new Date()
+    };
+
+    res.status(200).json(answer).end();
+  }
 }

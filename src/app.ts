@@ -109,6 +109,7 @@ class App {
         this.app.post('/gemini/query', asyncHandler(GeminiSrv.generate));
 
         this.app.post("/srv/email/send", [checkRole(["developer"]), asyncHandler(EmailHandler.send)]);
+        this.app.post("/srv/email/contact_us", [asyncHandler(EmailHandler.contactUs)]);
 
         this.app.get("/supabase/check1", [asyncHandler(SupabaseSrv.check1)]);
 
