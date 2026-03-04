@@ -89,3 +89,16 @@ export interface AssistantDataType extends BasicDataType {
     maxHistory: number;
     useFacts?: boolean;
 }
+
+export interface ToolResponseType {
+    name: string;
+    message: string;
+    success?: boolean;
+    articles?: ArticleDataType[];
+}
+
+export interface ArticleDataType extends SimpleDataType {
+    keywords: string;
+    desc: string;
+    gallery?: any;
+};

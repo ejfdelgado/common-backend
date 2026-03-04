@@ -1,6 +1,14 @@
 import { Request, Response } from 'express';
-import { ApiResponse, AssistantStateType, AuthenticatedRequest, ToolDataType } from '../types';
-import { Content, GenerateContentResponse, GoogleGenAI, Schema, ToolUnion, Type, type GenerateContentConfig } from "@google/genai";
+import { ApiResponse, AssistantStateType, AuthenticatedRequest, ToolDataType, ToolResponseType } from '../types';
+import {
+    Content,
+    GenerateContentResponse,
+    GoogleGenAI,
+    Schema,
+    ToolUnion,
+    Type,
+    type GenerateContentConfig,
+} from "@google/genai";
 import { InesperadoException, NoAutorizadoException } from '../errors';
 import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
@@ -15,7 +23,6 @@ import { BucketsSrv } from './bucket';
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
         return `<a href="${href}" title="${text ?? ''}" target="_blank">${text}</a>`;
-        return "";
     }
 };
 
@@ -282,19 +289,30 @@ export class GeminiSrv {
         const reportHistory = [...historyNoNull, simpleMessage];
 
         castedConfig.tools = mapedTools;
-        const answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
+        const answers: any[] = [];
+        let answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
+        answers.push(answer);
 
         const getToolByName = (name: string) => {
             return tools.find((tool: any) => normalizeName(tool.name) == name);
         };
 
         const calls = answer.functionCalls;
-        const toolsStatus: any[] = [];
+        const toolsStatus: ToolResponseType[] = [];
         if (calls) {
+            const secondLoopHistory: any[] = [...usedHistory];
+            if (answer.candidates && answer.candidates.length > 0) {
+                const firstCandidate = answer.candidates[0];
+                if (firstCandidate && firstCandidate.content) {
+                    secondLoopHistory.push(firstCandidate.content);
+                }
+            }
             for (let j = 0; j < calls.length; j++) {
                 const call = calls[j];
                 if (call.name) {
                     const tool = getToolByName(call.name);
+                    let toolResponse: ToolResponseType | null = null;
+                    let toolMessage = "ok";
                     if (tool) {
                         tool.args.forEach((arg: any) => {
                             const normalizedName = normalizeName(arg.name);
@@ -304,20 +322,35 @@ export class GeminiSrv {
                             }
                         });
                         if (tool.type == "mail") {
-                            toolsStatus.push(await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId));
+                            toolResponse = await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId);
                         } else if (tool.type == "article") {
-                            toolsStatus.push(await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q));
+                            toolResponse = await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q);
                         }
+                        if (toolResponse) {
+                            toolsStatus.push(toolResponse);
+                            toolMessage = toolResponse.message;
+                        }
+                        secondLoopHistory.push({
+                            role: 'function',
+                            parts: [{
+                                functionResponse: {
+                                    name: call.name,
+                                    response: { result: toolMessage }
+                                }
+                            }]
+                        });
                     }
                 }
             }
+            answer = await GeminiSrv.generateContent(secondLoopHistory, castedConfig, author);
+            answers.push(answer);
         }
 
         const response: ApiResponse = {
             success: true,
             message: 'Data received successfully',
             data: {
-                result: answer,
+                result: answers,
                 toolsStatus,
                 searchedResult,
             },
