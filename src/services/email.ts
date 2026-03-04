@@ -21,6 +21,7 @@ export class EmailHandler {
     body: SendRequestType,
     send: boolean = false,
     req?: AuthenticatedRequest,
+    waitSend: boolean = true,
     debug: boolean = false) {
 
     const EMAIL_SENDER = process.env.EMAIL_SENDER;
@@ -81,7 +82,11 @@ export class EmailHandler {
     const reponse: any = { msg, contenidoFinal };
 
     if (send) {
-      reponse.result = await sgMail.send(msg);
+      if (waitSend) {
+        reponse.result = await sgMail.send(msg);
+      } else {
+        reponse.result = sgMail.send(msg);
+      }
     }
 
     return reponse;
@@ -92,7 +97,7 @@ export class EmailHandler {
     const body = General.readParam(req, "body");
     debug = General.readParam(req, "debug", "0", false) != "0";
 
-    const { msg, contenidoFinal } = await EmailHandler.sendInternal(body, false, req, debug);
+    const { msg, contenidoFinal } = await EmailHandler.sendInternal(body, false, req, true, debug);
 
     if (debug) {
       res.status(200).set({ 'content-type': 'text/html; charset=utf-8' }).send(contenidoFinal).end();

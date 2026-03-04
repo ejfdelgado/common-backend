@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, AuthenticatedRequest } from '../types';
+import { ApiResponse, AssistantStateType, AuthenticatedRequest, ToolDataType } from '../types';
 import { Content, GenerateContentResponse, GoogleGenAI, Schema, ToolUnion, Type, type GenerateContentConfig } from "@google/genai";
 import { InesperadoException, NoAutorizadoException } from '../errors';
 import JSEncrypt from 'jsencrypt';
@@ -7,6 +7,10 @@ import { makeJsonToEncriptedTextResponse } from '../tools/General';
 import { EmailHandler } from './email';
 import { marked } from 'marked';
 import { SupabaseSrv } from './supabase';
+import { MyTuples, SimpleObj } from 'ejfdelgado-common-ts';
+import { MyStore } from './firestore';
+import { randomUUID } from 'crypto';
+import { BucketsSrv } from './bucket';
 
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
@@ -121,9 +125,9 @@ export class GeminiSrv {
         };
     }
 
-    static async sendEmail(tool: any, history: any[], template: string = "mails/chat_history_orig.html") {
+    static async sendEmail(tool: ToolDataType, history: any[], state: AssistantStateType, author: string, assistantId: string, template: string = "mails/chat_history_orig.html") {
         // Simplify last message:
-        if (history[history.length - 1].parts.length > 0) {
+        if (history.length > 0 && history[history.length - 1].parts.length > 0) {
             let lastMessage = history[history.length - 1].parts[0].text;
             if (typeof lastMessage == "string") {
                 lastMessage = lastMessage.replace(/^.*\[USER QUESTION\]\n/igs, "");
@@ -131,7 +135,7 @@ export class GeminiSrv {
             }
         }
         let success = true;
-        let message = GeminiSrv.replaceArguments(tool.ok, tool.args);
+        let message = GeminiSrv.replaceArguments(tool.ok ? tool.ok : "Ok default message.", tool.args);
         try {
             // Iterate history to use MD when needed
             history.forEach((message) => {
@@ -140,17 +144,48 @@ export class GeminiSrv {
                         message.parts[0].text = marked.parse(message.parts[0].text);
                     }
                 }
+            });
+            const tuples = MyTuples.getTuples(state);
+            const keys = Object.keys(tuples);
+            const stateList: any[] = [];
+            keys.forEach((k) => {
+                stateList.push({ key: k, val: JSON.stringify(SimpleObj.getValue(state, k)) })
             })
             const response = await EmailHandler.sendInternal({
-                params: { tool, history },
+                params: { tool, history, state, stateList },
                 subject: `Assistant - ${tool.name}`,
                 template: template,
                 to: tool.to,
-            }, true, undefined, false);
+            }, true, undefined, false, false);
+
+            const reportId = randomUUID();
+            const { contenidoFinal, result } = response;
+
+            const promises: Promise<any>[] = [];
+            promises.push(result);
+
+            // Upload to bucket on path author/assistantId
+            const ahora = new Date();
+            const year = ahora.getFullYear();
+            const month = ahora.getMonth() + 1;
+            const path = `alterego/${author}/${assistantId}/reports/${year}/${month}/${reportId}.html`;
+
+            // Insert on history
+            promises.push(MyStore.create(`knowledge/${assistantId}/history`, {
+                checked: false,
+                type: tool.type,
+                desc: tool.name,
+                created: Date.now(),
+                reportId: path,
+            }));
+
+            promises.push(BucketsSrv.uploadStringAsText(path, contenidoFinal, "text/html"));
+
+            await Promise.all(promises);
         } catch (err) {
             console.log(err);
             success = false;
-            message = GeminiSrv.replaceArguments(tool.error, tool.args);
+            message = GeminiSrv.replaceArguments(tool.error ? tool.error : "Error default message.", tool.args);
         }
 
         return {
@@ -161,7 +196,9 @@ export class GeminiSrv {
     }
 
     static async generate(req: Request, res: Response) {
-        const { history, config, pass, author, tools, extra } = req.body;
+        const { history, config, pass, author, tools, extra, state } = req.body;
+        const historyNoNull: any[] = history instanceof Array ? history : [];
+        //console.log(JSON.stringify(state, null, 4));
         const castedConfig: GenerateContentConfig = config;
         const mapedTools = GeminiSrv.mapTools(tools);
         // Decript the pass with the private key
@@ -200,8 +237,13 @@ export class GeminiSrv {
             role: "user",
             parts: [{ text: contextBlock + extra.q }]
         };
+        const simpleMessage: Content = {
+            role: "user",
+            parts: [{ text: extra.q }]
+        };
 
-        const usedHistory = [...history, userMessage];
+        const usedHistory = [...historyNoNull, userMessage];
+        const reportHistory = [...historyNoNull, simpleMessage];
 
         castedConfig.tools = mapedTools;
         const answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
@@ -226,9 +268,9 @@ export class GeminiSrv {
                             }
                         });
                         if (tool.type == "mail") {
-                            toolsStatus.push(await GeminiSrv.sendEmail(tool, history));
+                            toolsStatus.push(await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId));
                         } else if (tool.type == "article") {
-                            toolsStatus.push(await GeminiSrv.searchArticle(tool, history, extra.assistantId));
+                            toolsStatus.push(await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId));
                         }
                     }
                 }

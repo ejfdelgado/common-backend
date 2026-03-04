@@ -15,12 +15,12 @@
                     <h2>Information:</h2>
                 </td>
             </tr>
-$[for arg in ${tool.args}]
+            $[for arg in ${tool.args}]
             <tr>
                 <td><span style="display: block; padding: 10px 0;">${arg.name}:</span></td>
                 <td><strong style="display: block; padding: 10px 0;">${arg.val}</strong></td>
             </tr>
-$[endfor]
+            $[endfor]
             <tr>
                 <td colspan="2" style="background-color: rgb(206, 217, 255);"></td>
             </tr>
@@ -29,26 +29,45 @@ $[endfor]
                     <h2>History:</h2>
                 </td>
             </tr>
-$[for message in ${history}]
-$[if ${message.role} == 'model' && ${message.parts.0.text} != undefined]
+            $[for message in ${history}]
+            $[if ${message.role} == 'model' && ${message.parts.0.text} != undefined]
             <tr>
                 <td colspan="2" style="padding-bottom: 15px; padding-right: 30%;"><span
-                        style="display: block; background-color: rgb(237, 237, 237); padding: 10px; border-radius: 10px; position: relative;"><span style="font-size: 0.8rem; position: absolute; top: -18px;">Assistant: </span>${message.parts.0.text}</span></td>
+                        style="display: block; background-color: rgb(237, 237, 237); padding: 10px; border-radius: 10px; position: relative;"><span
+                            style="font-size: 0.8rem; position: absolute; top: -18px;">Assistant:
+                        </span>${message.parts.0.text}</span></td>
             </tr>
-$[endif]
-$[if ${message.role} == 'tool']
+            $[endif]
+            $[if ${message.role} == 'tool']
             <tr>
                 <td colspan="2" style="padding-bottom: 15px; padding-right: 30%;"><span
-                        style="display: block; background-color: rgb(237, 237, 237); padding: 10px; border-radius: 10px; position: relative;"><span style="font-size: 0.8rem; position: absolute; top: -18px;">Tool: </span>${message.parts.0.functionResponse.response.result}</span></td>
+                        style="display: block; background-color: rgb(237, 237, 237); padding: 10px; border-radius: 10px; position: relative;"><span
+                            style="font-size: 0.8rem; position: absolute; top: -18px;">Tool:
+                        </span>${message.parts.0.functionResponse.response.result}</span></td>
             </tr>
-$[endif]
-$[if ${message.role} == 'user']
+            $[endif]
+            $[if ${message.role} == 'user']
             <tr>
                 <td colspan="2" style="padding-bottom: 15px; padding-left: 30%;"><span
-                        style="display: block; background-color: rgb(198, 228, 255); padding: 10px; border-radius: 10px; position: relative;">${message.parts.0.text}</span></td>
+                        style="display: block; background-color: rgb(198, 228, 255); padding: 10px; border-radius: 10px; position: relative;">${message.parts.0.text}</span>
+                </td>
             </tr>
-$[endif]
-$[endfor]
+            $[endif]
+            $[endfor]
+            <tr>
+                <td colspan="2" style="background-color: rgb(206, 217, 255);"></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h2>Model:</h2>
+                </td>
+            </tr>
+            $[for arg in ${stateList}]
+            <tr>
+                <td><span style="display: block; padding: 10px 0;">${arg.key}:</span></td>
+                <td><strong style="display: block; padding: 10px 0;">${arg.val}</strong></td>
+            </tr>
+            $[endfor]
         </tbody>
     </table>
 </div>

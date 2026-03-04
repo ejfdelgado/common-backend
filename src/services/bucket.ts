@@ -10,6 +10,30 @@ export type BucketActionsType = "read" | "delete" | "write";
 
 export class BucketsSrv {
 
+    static async uploadStringAsText(
+        fileName: string,
+        content: string,
+        mimeType: string = "text/plain",
+        bucket_name?: string,
+    ): Promise<void> {
+        if (!bucket_name) {
+            bucket_name = process.env.BUCKET_NAME;
+        }
+        if (!bucket_name) {
+            throw new InesperadoException("No default bucket");
+        }
+        const bucket = storage.bucket(bucket_name);
+        const file = bucket.file(fileName);
+
+        await file.save(content, {
+            contentType: mimeType,
+            resumable: false,
+            metadata: {
+                cacheControl: 'no-cache',
+            },
+        });
+    }
+
     static async saveFile(req: AuthenticatedRequest, res: Response) {
         let bucket_name: string | undefined = General.readParam(req, "bucket_name", undefined, false);
         let file_path: string = General.readParam(req, "file_path", undefined, true);
