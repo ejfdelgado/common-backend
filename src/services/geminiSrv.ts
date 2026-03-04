@@ -100,7 +100,7 @@ export class GeminiSrv {
         return rendered;
     }
 
-    static async searchArticle(tool: any, history: any[], assistantId: string) {
+    static async searchArticle(tool: any, history: any[], assistantId: string, userQuery: string) {
         const { error, keywords } = tool;
         const success: boolean = true;
         let message = "";
@@ -117,7 +117,8 @@ export class GeminiSrv {
             MyStore.create(`knowledge/${assistantId}/history`, {
                 checked: false,
                 type: "not_found",
-                search: completeSearch,
+                searchText: completeSearch,
+                userQuery,
                 desc: tool.name,
                 created: Date.now(),
             });
@@ -291,7 +292,7 @@ export class GeminiSrv {
                         if (tool.type == "mail") {
                             toolsStatus.push(await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId));
                         } else if (tool.type == "article") {
-                            toolsStatus.push(await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId));
+                            toolsStatus.push(await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q));
                         }
                     }
                 }
