@@ -311,7 +311,14 @@ export class GeminiSrv {
             return tools.find((tool: any) => normalizeName(tool.name) == name);
         };
 
+        const MAX_ITERATIONS = 5;
+        let iterationCount = 0;
+
         do {
+            if (iterationCount >= MAX_ITERATIONS) {
+                break;
+            }
+            iterationCount++;
             let answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
             answers.push(answer);
 
@@ -380,7 +387,10 @@ export class GeminiSrv {
             }
         } while (true);
 
-        //console.log(JSON.stringify(answers, null, 4));
+        if (iterationCount >= MAX_ITERATIONS) {
+            // Generate a default response when the max repetition is exceded
+            answers.push({ candidates: [{ content: { parts: [{ text: "Ok...", }] } }] });
+        }
 
         const response: ApiResponse = {
             success: true,
