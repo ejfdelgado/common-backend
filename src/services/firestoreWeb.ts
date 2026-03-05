@@ -4,6 +4,7 @@ import { General, innerTextLite } from "../tools/General";
 import { MyStore } from "./firestore";
 import { MyUtilities } from 'ejfdelgado-common-ts';
 import { NoAutorizadoException } from "../errors";
+import { checkRoleInternal, checkRoleSimple } from "../middleware/firebase-role.middleware";
 
 export class FirestoreWeb {
     static async createUpdate(req: AuthenticatedRequest, res: Response) {
@@ -84,6 +85,10 @@ export class FirestoreWeb {
             // Maybe a creation
             const exists = await MyStore.exist(collection, id);
             if (!exists) {
+                // Check role
+                if (["knowledge"].indexOf(collection) >= 0) {
+                    await checkRoleSimple(collection, req, [`${collection}_create`]);
+                }
                 autoCreation();
             } else {
                 // Exists before, read parameters to compute searchable
@@ -103,6 +108,9 @@ export class FirestoreWeb {
             dbResponse = await MyStore.updateOrCreateById(collection, id, data);
         } else {
             // Sure a creation
+            if (["knowledge"].indexOf(collection) >= 0) {
+                await checkRoleSimple(collection, req, [`${collection}_create`]);
+            }
             autoCreation();
             data.search = computeSearchable(actualSearchables);
             dbResponse = await MyStore.create(collection, data);
