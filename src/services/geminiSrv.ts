@@ -301,70 +301,84 @@ export class GeminiSrv {
 
         const usedHistory = [...historyNoNull, userMessage];
         const reportHistory = [...historyNoNull, simpleMessage];
+        const toolsStatus: ToolResponseType[] = [];
 
         castedConfig.tools = mapedTools;
         //console.log(JSON.stringify(mapedTools, null, 4));
         const answers: any[] = [];
-        let answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
-        answers.push(answer);
 
         const getToolByName = (name: string) => {
             return tools.find((tool: any) => normalizeName(tool.name) == name);
         };
 
-        const calls = answer.functionCalls;
-        const toolsStatus: ToolResponseType[] = [];
-        if (calls) {
-            const secondLoopHistory: any[] = [...usedHistory];
-            if (answer.candidates && answer.candidates.length > 0) {
-                const firstCandidate = answer.candidates[0];
-                if (firstCandidate && firstCandidate.content) {
-                    secondLoopHistory.push(firstCandidate.content);
+        do {
+            let answer = await GeminiSrv.generateContent(usedHistory, castedConfig, author);
+            answers.push(answer);
+
+            const calls = answer.functionCalls;
+
+            if (calls) {
+                if (answer.candidates && answer.candidates.length > 0) {
+                    const firstCandidate = answer.candidates[0];
+                    if (firstCandidate && firstCandidate.content) {
+                        usedHistory.push(firstCandidate.content);
+                    }
                 }
-            }
-            for (let j = 0; j < calls.length; j++) {
-                const call = calls[j];
-                if (call.name) {
-                    const tool = getToolByName(call.name);
-                    let toolResponse: ToolResponseType | null = null;
-                    let toolMessage = "ok";
-                    if (tool) {
-                        tool.args.forEach((arg: any) => {
-                            const normalizedName = normalizeName(arg.name);
-                            if (call.args) {
-                                const val = call.args[normalizedName];
-                                arg.val = val;
-                            }
-                        });
-                        if (tool.type == "mail") {
-                            toolResponse = await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId);
-                        } else if (tool.type == "article") {
-                            toolResponse = await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q);
-                        } else {
-                            toolResponse = {
-                                name: call.name,
-                                message: "",
-                            };
-                        }
-                        if (toolResponse) {
-                            toolsStatus.push(toolResponse);
-                            toolMessage = toolResponse.message;
-                        }
-                        secondLoopHistory.push({
-                            role: 'function',
-                            parts: [{
-                                functionResponse: {
-                                    name: call.name,
-                                    response: { result: toolMessage }
+                for (let j = 0; j < calls.length; j++) {
+                    const call = calls[j];
+                    if (call.name) {
+                        const tool = getToolByName(call.name);
+                        let toolResponse: ToolResponseType | null = null;
+                        let toolMessage = "ok";
+                        if (tool) {
+                            tool.args.forEach((arg: any) => {
+                                const normalizedName = normalizeName(arg.name);
+                                if (call.args) {
+                                    const val = call.args[normalizedName];
+                                    arg.val = val;
                                 }
-                            }]
-                        });
+                            });
+                            if (tool.type == "mail") {
+                                toolResponse = await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId);
+                            } else if (tool.type == "article") {
+                                toolResponse = await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q);
+                            } else {
+                                toolResponse = {
+                                    name: call.name,
+                                    message: "",
+                                };
+                            }
+                            if (toolResponse) {
+                                toolsStatus.push(toolResponse);
+                                toolMessage = toolResponse.message;
+                            }
+                            usedHistory.push({
+                                role: 'function',
+                                parts: [{
+                                    functionResponse: {
+                                        name: call.name,
+                                        response: { result: toolMessage }
+                                    }
+                                }]
+                            });
+                        }
                     }
                 }
             }
-            answer = await GeminiSrv.generateContent(secondLoopHistory, castedConfig, author);
-            answers.push(answer);
-        }
+            if (answer.candidates && answer.candidates.length > 0) {
+                const responseContent = answer.candidates[0].content;
+                if (responseContent && responseContent.parts) {
+                    const textPart = responseContent.parts.find(part => part.text);
+                    if (textPart) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        } while (true);
 
         //console.log(JSON.stringify(answers, null, 4));
 
