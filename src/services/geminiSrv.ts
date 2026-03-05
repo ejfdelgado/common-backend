@@ -48,6 +48,10 @@ export function gescriptionOrNone(desc?: string) {
     }
 }
 
+export function isPrimitive(value: unknown): boolean {
+    return value === null || (typeof value !== 'object' && typeof value !== 'function');
+}
+
 export class GeminiSrv {
 
     static async generateContent(history: any[], config: GenerateContentConfig, author: string): Promise<GenerateContentResponse> {
@@ -168,11 +172,15 @@ export class GeminiSrv {
                     }
                 }
             });
+            // Tuples break down
             const tuples = MyTuples.getTuples(state);
             const keys = Object.keys(tuples);
             const stateList: any[] = [];
             keys.forEach((k) => {
-                stateList.push({ key: k, val: JSON.stringify(SimpleObj.getValue(state, k)) })
+                const value = SimpleObj.getValue(state, k);
+                if (isPrimitive(value)) {
+                    stateList.push({ key: k, val: JSON.stringify(value) });
+                }
             });
 
             let customTemplate = template;
@@ -180,23 +188,29 @@ export class GeminiSrv {
                 customTemplate = tool.template.trim();
             }
 
+            const reportId = randomUUID();
+            const ahora = new Date();
+            const year = ahora.getFullYear();
+            const month = ahora.getMonth() + 1;
+            const date = ahora.getDate();
+            const hour = ahora.getUTCHours();
+            const minutes = ahora.getMinutes();
+            const seconds = ahora.getSeconds();
+
+            // TODO incluir el nombre del asistente, no solo el nombre de la herramienta.
             const response = await EmailHandler.sendInternal({
                 params: { tool, history, state, stateList },
-                subject: `Assistant - ${tool.name}`,
+                subject: `Assistant - ${tool.name} - ${year}/${month}/${date} ${hour}:${minutes}:${seconds}`,
                 template: customTemplate,
                 to: tool.to,
             }, true, undefined, false, false);
 
-            const reportId = randomUUID();
             const { contenidoFinal, result } = response;
 
             const promises: Promise<any>[] = [];
             promises.push(result);
 
             // Upload to bucket on path author/assistantId
-            const ahora = new Date();
-            const year = ahora.getFullYear();
-            const month = ahora.getMonth() + 1;
             const path = `alterego/${author}/${assistantId}/reports/${year}/${month}/${reportId}.html`;
 
             // Insert on history
