@@ -21,16 +21,29 @@ export function truncateString(max: number, val?: string) {
     }
 }
 
+const SIMPLIFIED_MAP: { [key: string]: { pathIn: string, collection: string } } = {
+    "1": {
+        pathIn: "/alterego/use",
+        collection: "pubknowledge",
+    }
+}
+
 export class TemplatesSrv {
 
     static async socialShare(req: Request, res: Response) {
         let collection: string | undefined = General.readParam(req, "col", undefined, true);
         let id: string | undefined = General.readParam(req, "id", undefined, true);
-        const pathIn: string = General.readParam(req, "path", undefined, true);
+        let pathIn: string = General.readParam(req, "path", undefined, false);
 
         if (!collection || !id) {
             throw new Error("error");
         }
+
+        if (collection in SIMPLIFIED_MAP) {
+            pathIn = SIMPLIFIED_MAP[collection].pathIn;
+            collection = SIMPLIFIED_MAP[collection].collection;
+        }
+
         const doc = await MyStore.readById(collection, id);
         const { title, description, author_picture, image } = doc;
         let imageThumnail = image;
