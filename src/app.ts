@@ -18,6 +18,7 @@ import { GeminiSrv } from './services/geminiSrv';
 import { EmailHandler } from './services/email';
 import { SupabaseSrv } from './services/supabase';
 import { EmbedSrv } from './services/embeed.service';
+import { CalendarService } from './services/calendar.service';
 
 let allowedOrigins = [
     'http://localhost:4200',
@@ -126,6 +127,8 @@ class App {
         this.app.post("/articles/search", [checkRole(["alterego_editor", "alterego_viewer"]), asyncHandler(SupabaseSrv.searchArticle)]);
 
         this.app.get("/embed/use", [checkRole(["developer"]), asyncHandler(EmbedSrv.use)]);
+
+        this.app.post("/calendar/search", [isAuthenticated(), asyncHandler(CalendarService.search)]);
 
 
         this.app.use('*', (req: Request, res: Response) => {
