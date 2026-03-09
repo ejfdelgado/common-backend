@@ -7,13 +7,22 @@ import { google } from "googleapis";
 
 export class CalendarService {
 
-    static async findMeetingByType(auth: any, typeKeyword: string) {
+    static async findMeetingByType(auth: any, max: number = 3, hoursGap: number = 0, typeKeyword: string) {
         const calendar = google.calendar({ version: 'v3', auth });
 
+        let hours = hoursGap;
+        if (isNaN(hours)) {
+            hours = 0;
+        }
+        console.log(`hoursGap=${hoursGap}`);
+        const millis = Date.now() + (1000 * 60 * 60 * hoursGap);
+        console.log(`millis=${millis}`);
+        const timeMin = new Date(millis).toISOString();
+        console.log(`timeMin=${timeMin}, hoursGap=${hoursGap}`);
         const res = await calendar.events.list({
             calendarId: 'primary',
-            timeMin: new Date().toISOString(),
-            maxResults: 3,
+            timeMin: timeMin,
+            maxResults: max,
             singleEvents: true,
             orderBy: 'startTime',
             q: typeKeyword,
@@ -28,9 +37,15 @@ export class CalendarService {
         return events;
     }
 
-    static async searchInternal(parentRawId: string, toolRawId: string, text?: string, user?: AuthenticatedUser) {
+    static async searchInternal(parentRawId: string, toolRawId: string, max: number = 3, hoursGap: number = 0, text?: string, user?: AuthenticatedUser) {
         // Read the tool and parent if needed
         // Check the current user is in the owners of the parent...
+        if (!max) {
+            max = 3;
+        }
+        if (!hoursGap) {
+            hoursGap = 0;
+        }
         const promises = [];
         promises.push(MyStore.readById(`knowledge/${parentRawId}/tool`, toolRawId));
         if (user) {
@@ -73,19 +88,21 @@ export class CalendarService {
             keyword = text;
         }
 
-        return await CalendarService.findMeetingByType(auth, keyword);
+        return await CalendarService.findMeetingByType(auth, max, hoursGap, keyword);
     }
 
     static async search(req: AuthenticatedRequest, res: Response) {
         const parentRawId: string = General.readParam(req, "parent", "", true);
         const toolRawId: string = General.readParam(req, "toolId", "", true);
         const text: string = General.readParam(req, "text", null, false);
+        let max = parseInt(General.readParam(req, "text", "3", true));
+        let hoursGap = parseInt(General.readParam(req, "hoursGap", "6", true));
         const user = req.user;
         if (!user) {
             throw new NoAutorizadoException("No user");
         }
 
-        const events = await CalendarService.searchInternal(parentRawId, toolRawId, text, user);
+        const events = await CalendarService.searchInternal(parentRawId, toolRawId, max, hoursGap, text, user);
 
         const response: ApiResponse = {
             success: true,
