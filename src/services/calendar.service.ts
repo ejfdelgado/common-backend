@@ -14,11 +14,8 @@ export class CalendarService {
         if (isNaN(hours)) {
             hours = 0;
         }
-        console.log(`hoursGap=${hoursGap}`);
         const millis = Date.now() + (1000 * 60 * 60 * hoursGap);
-        console.log(`millis=${millis}`);
         const timeMin = new Date(millis).toISOString();
-        console.log(`timeMin=${timeMin}, hoursGap=${hoursGap}`);
         const res = await calendar.events.list({
             calendarId: 'primary',
             timeMin: timeMin,

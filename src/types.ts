@@ -66,6 +66,9 @@ export interface ToolDataType extends SimpleDataType {
     affectModel?: boolean;
     template?: string;
     args: ArgumentDataType[];
+    calendarUser?: AuthenticatedUser | null,
+    calendarKeyword?: string;
+    calendarMinHoursGap?: number;
 };
 
 export type SearchLangsType = "en" | "es" | "multi";
@@ -95,6 +98,7 @@ export interface ToolResponseType {
     message: string;
     success?: boolean;
     articles?: ArticleDataType[];
+    events?: CalendarEventType[] | null;
 }
 
 export interface ArticleDataType extends SimpleDataType {
@@ -102,3 +106,13 @@ export interface ArticleDataType extends SimpleDataType {
     desc: string;
     gallery?: any;
 };
+
+export interface CalendarEventType {
+    "id": string;
+    "htmlLink": string;
+    "summary": string;
+    "start": {
+        "dateTime": string;//2026-03-12T14:30:00-05:00
+        "timeZone": string;
+    };
+}

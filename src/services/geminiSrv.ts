@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, AssistantStateType, ToolDataType, ToolResponseType } from '../types';
+import { ApiResponse, AssistantStateType, CalendarEventType, ToolDataType, ToolResponseType } from '../types';
 import {
     Content,
     GenerateContentResponse,
@@ -19,6 +19,7 @@ import { MyTuples, SimpleObj } from 'ejfdelgado-common-ts';
 import { MyStore } from './firestore';
 import { randomUUID } from 'crypto';
 import { BucketsSrv } from './bucket';
+import { CalendarService } from './calendar.service';
 
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
@@ -111,7 +112,25 @@ export class GeminiSrv {
         return rendered;
     }
 
-    static async searchArticle(tool: any, history: any[], assistantId: string, userQuery: string) {
+    static async searchEvent(tool: any, history: any[], assistantId: string, userQuery: string): Promise<ToolResponseType | null> {
+        const { error, ok } = tool;
+        const events = await CalendarService.searchInternal(assistantId, tool.id, 5, tool.calendarMinHoursGap, tool.calendarKeyword);
+        const castedEvent = (events as CalendarEventType[] | null);
+        let message = ok;
+        let success = true;
+        if (!castedEvent) {
+            message = error;
+            success = false;
+        }
+        return {
+            name: tool.name,
+            message,
+            success,
+            events: castedEvent,
+        };
+    }
+
+    static async searchArticle(tool: any, history: any[], assistantId: string, userQuery: string): Promise<ToolResponseType | null> {
         const { error, keywords } = tool;
         const success: boolean = true;
         let message = "";
@@ -349,6 +368,8 @@ export class GeminiSrv {
                                 toolResponse = await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId);
                             } else if (tool.type == "article") {
                                 toolResponse = await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q);
+                            } else if (tool.type == "calendar") {
+                                toolResponse = await GeminiSrv.searchEvent(tool, reportHistory, extra.assistantId, extra.q);
                             } else {
                                 toolResponse = {
                                     name: call.name,
