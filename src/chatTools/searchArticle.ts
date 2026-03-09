@@ -1,10 +1,10 @@
 import { MyStore } from "../services/firestore";
 import { SupabaseSrv } from "../services/supabase";
-import { ToolResponseType } from "../types";
+import { ToolDataType, ToolResponseType } from "../types";
 import { replaceArguments } from "./sendEmail";
 
 export async function searchArticle(
-    tool: any,
+    tool: ToolDataType,
     history: any[],
     assistantId: string,
     userQuery: string,
@@ -20,7 +20,7 @@ export async function searchArticle(
     const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
 
     if (matches.length == 0) {
-        message = replaceArguments(error, tool.args);
+        message = replaceArguments(error ? error : "Not found", tool.args);
         // No need to wait, maybe...
         MyStore.create(`knowledge/${assistantId}/history`, {
             checked: false,

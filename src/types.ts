@@ -96,6 +96,7 @@ export interface AssistantDataType extends BasicDataType {
 export interface ToolResponseType {
     name: string;
     message: string;
+    hidden?: boolean;
     success?: boolean;
     articles?: ArticleDataType[];
     events?: CalendarEventType[] | null;

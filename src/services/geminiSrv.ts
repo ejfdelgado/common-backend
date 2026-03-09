@@ -14,10 +14,10 @@ import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
 import { marked } from 'marked';
 import { SupabaseSrv } from './supabase';
-import { MyStore } from './firestore';
 import { calendarSearchEvent } from '../chatTools/calendar';
-import { gescriptionOrNone, normalizeName, replaceArguments, sendEmail } from '../chatTools/sendEmail';
+import { gescriptionOrNone, normalizeName, sendEmail } from '../chatTools/sendEmail';
 import { searchArticle } from '../chatTools/searchArticle';
+import { addGuestToMeeting } from '../chatTools/addGuestToMeeting';
 
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
@@ -185,16 +185,25 @@ export class GeminiSrv {
                                     arg.val = val;
                                 }
                             });
-                            if (tool.type == "mail") {
-                                toolResponse = await sendEmail(tool, reportHistory, state, author, extra.assistantId);
-                            } else if (tool.type == "article") {
-                                toolResponse = await searchArticle(tool, reportHistory, extra.assistantId, extra.q);
-                            } else if (tool.type == "calendar") {
-                                toolResponse = await calendarSearchEvent(tool, reportHistory, extra.assistantId, extra.q);
-                            } else {
+                            try {
+                                if (tool.type == "mail") {
+                                    toolResponse = await sendEmail(tool, reportHistory, state, author, extra.assistantId);
+                                } else if (tool.type == "article") {
+                                    toolResponse = await searchArticle(tool, reportHistory, extra.assistantId, extra.q);
+                                } else if (tool.type == "calendar") {
+                                    toolResponse = await calendarSearchEvent(tool, reportHistory, extra.assistantId, extra.q);
+                                } else if (tool.type == "select_event") {
+                                    toolResponse = await addGuestToMeeting(tool, reportHistory, extra.assistantId, extra.q);
+                                } else {
+                                    toolResponse = {
+                                        name: call.name,
+                                        message: "",
+                                    };
+                                }
+                            } catch (err: any) {
                                 toolResponse = {
                                     name: call.name,
-                                    message: "",
+                                    message: err.message,
                                 };
                             }
                             if (toolResponse) {
