@@ -69,6 +69,8 @@ export interface ToolDataType extends SimpleDataType {
     calendarUser?: AuthenticatedUser | null,
     calendarKeyword?: string;
     calendarMinHoursGap?: number;
+    calendarEmptyEvents?: boolean;
+    calendarMaxEvents?: number;
 };
 
 export type SearchLangsType = "en" | "es" | "multi";

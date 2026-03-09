@@ -8,7 +8,14 @@ export async function calendarSearchEvent(
     userQuery: string,
 ): Promise<ToolResponseType | null> {
     const { error } = tool;
-    const events = await CalendarService.searchInternal(assistantId, tool.id, 5, tool.calendarMinHoursGap, tool.calendarKeyword);
+    const events = await CalendarService.searchInternal(
+        assistantId,
+        tool.id,
+        tool.calendarMaxEvents,
+        tool.calendarMinHoursGap,
+        tool.calendarEmptyEvents === true,
+        tool.calendarKeyword,
+    );
     const castedEvent = (events as CalendarEventType[] | null);
     let message = "";
     let success = true;

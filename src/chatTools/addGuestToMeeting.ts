@@ -15,7 +15,7 @@ export async function addGuestToMeeting(
     let message = ok ? ok : "Ok";
     let success = true;
     if (!argEmail || !argId) {
-        message = error ? error : "Error";
+        message = error ? error : "Error scheduling, try later.";
         success = false;
     } else {
         await CalendarService.addGuestToMeeting(assistantId, tool.id, argId.val, argEmail.val);
@@ -25,5 +25,6 @@ export async function addGuestToMeeting(
         name: tool.name,
         message,
         success,
+        hidden: true,
     };
 }

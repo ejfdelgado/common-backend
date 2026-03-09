@@ -7,7 +7,7 @@ import { google } from "googleapis";
 
 export class CalendarService {
 
-    static async findMeetingByType(auth: any, max: number = 3, hoursGap: number = 0, typeKeyword: string) {
+    static async findMeetingByType(auth: any, max: number = 3, hoursGap: number = 0, emptyGuests: boolean = false, typeKeyword: string) {
         const calendar = google.calendar({ version: 'v3', auth });
 
         let hours = hoursGap;
@@ -82,6 +82,7 @@ export class CalendarService {
         toolRawId: string,
         max: number = 3,
         hoursGap: number = 0,
+        emptyGuests: boolean = false,
         text?: string,
         user?: AuthenticatedUser,
     ) {
@@ -106,13 +107,57 @@ export class CalendarService {
             keyword = text;
         }
 
-        return await CalendarService.findMeetingByType(auth, max, hoursGap, keyword);
+        let eventsFound = await CalendarService.findMeetingByType(
+            auth,
+            max,
+            hoursGap,
+            emptyGuests,
+            keyword,
+        );
+        if (!eventsFound) {
+            return eventsFound;
+        }
+
+        if (emptyGuests) {
+            const meetingsWithoutGuests = eventsFound.filter(event => {
+                if (!event.attendees) {
+                    // no guests
+                    return true;
+                } else if (event.attendees.length === 0) {
+                    // zero guests
+                    return true;
+                } else {
+                    // Some guests
+                    // filter
+                    const forbidList: string[] = [];
+                    if (event.creator?.email) {
+                        forbidList.push(event.creator.email);
+                    }
+                    if (event.organizer?.email) {
+                        forbidList.push(event.organizer.email);
+                    }
+                    if (forbidList.length > 0) {
+                        const others = event.attendees.filter(e => !e.email || forbidList.indexOf(e.email) < 0);
+                        return others.length == 0;
+                    } else {
+                        return false;
+                    }
+                }
+            });
+            if (meetingsWithoutGuests.length == 0) {
+                return null;
+            }
+            return meetingsWithoutGuests;
+        }
+
+        return eventsFound;
     }
 
     static async search(req: AuthenticatedRequest, res: Response) {
         const parentRawId: string = General.readParam(req, "parent", "", true);
         const toolRawId: string = General.readParam(req, "toolId", "", true);
         const text: string = General.readParam(req, "text", null, false);
+        const emptyGuest: string = General.readParam(req, "text", null, false);
         let max = parseInt(General.readParam(req, "text", "3", true));
         let hoursGap = parseInt(General.readParam(req, "hoursGap", "6", true));
         const user = req.user;
@@ -120,7 +165,7 @@ export class CalendarService {
             throw new NoAutorizadoException("No user");
         }
 
-        const events = await CalendarService.searchInternal(parentRawId, toolRawId, max, hoursGap, text, user);
+        const events = await CalendarService.searchInternal(parentRawId, toolRawId, max, hoursGap, emptyGuest == "true", text, user);
 
         const response: ApiResponse = {
             success: true,
