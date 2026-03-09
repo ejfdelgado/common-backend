@@ -13,16 +13,16 @@ export async function calendarSearchEvent(
     let message = "";
     let success = true;
     if (!castedEvent) {
-        message = error ? error : "Not found";
+        message = error ? error : "No schedule found. Try later.";
         success = false;
     } else {
-        message = castedEvent.map(e => "- " + e.start.dateTime).join(". ");
+        message = castedEvent.map(e => `- ${e.start.dateTime} (${e.start.timeZone})`).join(". ");
     }
     return {
         name: tool.name,
         message,
         success,
         events: castedEvent,
-        hidden: success,
+        hidden: true,
     };
 }
