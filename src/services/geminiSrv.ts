@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, AssistantStateType, CalendarEventType, ToolDataType, ToolResponseType } from '../types';
+import { ApiResponse, ToolResponseType } from '../types';
 import {
     Content,
     GenerateContentResponse,
@@ -12,14 +12,12 @@ import {
 import { InesperadoException, NoAutorizadoException } from '../errors';
 import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
-import { EmailHandler } from './email';
 import { marked } from 'marked';
 import { SupabaseSrv } from './supabase';
-import { MyTuples, SimpleObj } from 'ejfdelgado-common-ts';
 import { MyStore } from './firestore';
-import { randomUUID } from 'crypto';
-import { BucketsSrv } from './bucket';
-import { CalendarService } from './calendar.service';
+import { calendarSearchEvent } from '../chatTools/calendar';
+import { gescriptionOrNone, normalizeName, replaceArguments, sendEmail } from '../chatTools/sendEmail';
+import { searchArticle } from '../chatTools/searchArticle';
 
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
@@ -29,29 +27,7 @@ const renderer: any = {
 
 marked.use({ renderer });
 
-export function removeAccents(text: string): string {
-    return text
-        .normalize('NFD')                 // Separates characters from their accents
-        .replace(/[\u0300-\u036f]/g, ''); // Removes the accent marks (combining marks)
-};
 
-export function normalizeName(name: string) {
-    return removeAccents(name.toLowerCase()).replace(/[^a-z]/g, "_");
-}
-
-export function gescriptionOrNone(desc?: string) {
-    if (typeof desc != "string") {
-        return undefined;
-    }
-    let d = desc.trim();
-    if (d.length > 0) {
-        return d.trim();
-    }
-}
-
-export function isPrimitive(value: unknown): boolean {
-    return value === null || (typeof value !== 'object' && typeof value !== 'function');
-}
 
 export class GeminiSrv {
 
@@ -100,161 +76,6 @@ export class GeminiSrv {
                 }],
             };
         });
-    }
-
-    static replaceArguments(template: string, args: any[]) {
-        let rendered = template;
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            const pattern = `\\$\\s*\\{\\s*${arg.name}\\s*\\}`;
-            rendered = rendered.replace(new RegExp(pattern, "ig"), arg.val);
-        }
-        return rendered;
-    }
-
-    static async searchEvent(tool: any, history: any[], assistantId: string, userQuery: string): Promise<ToolResponseType | null> {
-        const { error, ok } = tool;
-        const events = await CalendarService.searchInternal(assistantId, tool.id, 5, tool.calendarMinHoursGap, tool.calendarKeyword);
-        const castedEvent = (events as CalendarEventType[] | null);
-        let message = ok;
-        let success = true;
-        if (!castedEvent) {
-            message = error;
-            success = false;
-        }
-        return {
-            name: tool.name,
-            message,
-            success,
-            events: castedEvent,
-        };
-    }
-
-    static async searchArticle(tool: any, history: any[], assistantId: string, userQuery: string): Promise<ToolResponseType | null> {
-        const { error, keywords } = tool;
-        const success: boolean = true;
-        let message = "";
-
-        const searched: string[] = tool.args.map((arg: any) => arg.val);
-
-        const completeSearch = keywords + " " + [...searched].join(" ");
-
-        const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
-
-        if (matches.length == 0) {
-            message = GeminiSrv.replaceArguments(error, tool.args);
-            // No need to wait, maybe...
-            MyStore.create(`knowledge/${assistantId}/history`, {
-                checked: false,
-                type: "not_found",
-                searchText: completeSearch,
-                userQuery,
-                desc: tool.name,
-                created: Date.now(),
-            });
-        } else {
-            message = GeminiSrv.replaceArguments(matches[0].desc, tool.args);
-        }
-
-        return {
-            name: tool.name,
-            message,
-            success,
-            articles: matches,
-        };
-    }
-
-    static async sendEmail(
-        tool: ToolDataType,
-        history: any[],
-        state: AssistantStateType,
-        author: string,
-        assistantId: string,
-        template: string = "mails/chat_history_orig.html",
-    ) {
-        // Simplify last message:
-        if (history.length > 0 && history[history.length - 1].parts.length > 0) {
-            let lastMessage = history[history.length - 1].parts[0].text;
-            if (typeof lastMessage == "string") {
-                lastMessage = lastMessage.replace(/^.*\[USER QUESTION\]\n/igs, "");
-                history[history.length - 1].parts[0].text = lastMessage;
-            }
-        }
-        let success = true;
-        let message = GeminiSrv.replaceArguments(tool.ok ? tool.ok : "Ok default message.", tool.args);
-        try {
-            // Iterate history to use MD when needed
-            history.forEach((message) => {
-                if (message.role == 'model') {
-                    if (message.parts[0].text) {
-                        message.parts[0].text = marked.parse(message.parts[0].text);
-                    }
-                }
-            });
-            // Tuples break down
-            const tuples = MyTuples.getTuples(state);
-            const keys = Object.keys(tuples);
-            const stateList: any[] = [];
-            keys.forEach((k) => {
-                const value = SimpleObj.getValue(state, k);
-                if (isPrimitive(value)) {
-                    stateList.push({ key: k, val: JSON.stringify(value) });
-                }
-            });
-
-            let customTemplate = template;
-            if (typeof tool.template == "string" && tool.template.trim().length > 0) {
-                customTemplate = tool.template.trim();
-            }
-
-            const reportId = randomUUID();
-            const ahora = new Date();
-            const year = ahora.getFullYear();
-            const month = ahora.getMonth() + 1;
-            const date = ahora.getDate();
-            const hour = ahora.getUTCHours();
-            const minutes = ahora.getMinutes();
-            const seconds = ahora.getSeconds();
-
-            // TODO incluir el nombre del asistente, no solo el nombre de la herramienta.
-            const response = await EmailHandler.sendInternal({
-                params: { tool, history, state, stateList },
-                subject: `Assistant - ${tool.name} - ${year}/${month}/${date} ${hour}:${minutes}:${seconds}`,
-                template: customTemplate,
-                to: tool.to,
-            }, true, undefined, false, false);
-
-            const { contenidoFinal, result } = response;
-
-            const promises: Promise<any>[] = [];
-            promises.push(result);
-
-            // Upload to bucket on path author/assistantId
-            const path = `alterego/${author}/${assistantId}/reports/${year}/${month}/${reportId}.html`;
-
-            // Insert on history
-            promises.push(MyStore.create(`knowledge/${assistantId}/history`, {
-                checked: false,
-                type: tool.type,//email always
-                desc: tool.name,
-                created: Date.now(),
-                reportId: path,
-            }));
-
-            promises.push(BucketsSrv.uploadStringAsText(path, contenidoFinal, "text/html"));
-
-            await Promise.all(promises);
-        } catch (err) {
-            console.log(err);
-            success = false;
-            message = GeminiSrv.replaceArguments(tool.error ? tool.error : "Error default message.", tool.args);
-        }
-
-        return {
-            name: tool.name,
-            message,
-            success,
-        };
     }
 
     static async generate(req: Request, res: Response) {
@@ -365,11 +186,11 @@ export class GeminiSrv {
                                 }
                             });
                             if (tool.type == "mail") {
-                                toolResponse = await GeminiSrv.sendEmail(tool, reportHistory, state, author, extra.assistantId);
+                                toolResponse = await sendEmail(tool, reportHistory, state, author, extra.assistantId);
                             } else if (tool.type == "article") {
-                                toolResponse = await GeminiSrv.searchArticle(tool, reportHistory, extra.assistantId, extra.q);
+                                toolResponse = await searchArticle(tool, reportHistory, extra.assistantId, extra.q);
                             } else if (tool.type == "calendar") {
-                                toolResponse = await GeminiSrv.searchEvent(tool, reportHistory, extra.assistantId, extra.q);
+                                toolResponse = await calendarSearchEvent(tool, reportHistory, extra.assistantId, extra.q);
                             } else {
                                 toolResponse = {
                                     name: call.name,
