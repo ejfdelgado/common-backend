@@ -241,7 +241,7 @@ export class RolesAdminSrv {
         const response: ApiResponse = {
             success: true,
             message: 'Ok',
-            data: url,
+            data: { url },
             timestamp: new Date()
         };
         res.status(200).json(response);
