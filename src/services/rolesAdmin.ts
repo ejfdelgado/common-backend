@@ -4,8 +4,14 @@ import { ApiResponse, AuthenticatedRequest } from '../types';
 import { General } from '../tools/General';
 import { MyStore } from './firestore';
 import { NoAutorizadoException } from '../errors';
-import { firebaseAdmin } from '../firebase-admin';
+import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
+
+const oauthClient = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI,
+);
 
 export class RolesAdminSrv {
 
@@ -208,5 +214,58 @@ export class RolesAdminSrv {
             timestamp: new Date()
         };
         res.status(200).json(response);
+    }
+
+    static async calendarConnect(req: AuthenticatedRequest, res: Response) {
+        const currentUrl = General.readParam(req, "currentUrl", "", true);
+        const user = req.user;
+        if (!user) {
+            throw new NoAutorizadoException("");
+        }
+
+        const scopes = [
+            'https://www.googleapis.com/auth/calendar.events'
+        ];
+
+        const state = Buffer
+            .from(JSON.stringify({ uid: user.uid, currentUrl }))
+            .toString("base64");
+
+        const url = oauthClient.generateAuthUrl({
+            access_type: 'offline',
+            prompt: 'consent',
+            scope: scopes,
+            state: state,
+        });
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'Ok',
+            data: url,
+            timestamp: new Date()
+        };
+        res.status(200).json(response);
+    }
+
+    static async calendarConnectCallback(req: AuthenticatedRequest, res: Response) {
+        const code = General.readParam(req, "code", "", true);
+        const stateOriginal = General.readParam(req, "state", "", true);
+
+        const state = JSON.parse(
+            Buffer.from(stateOriginal, "base64").toString(),
+        );
+
+        const { tokens } = await oauthClient.getToken(code);
+
+        const refreshToken = tokens.refresh_token;
+
+        if (!refreshToken) {
+            return res.status(400).send("No refresh token returned");
+        }
+
+        await MyStore.updateOrCreateById("personal", state.uid, { refreshToken });
+
+        // Redirect to
+        res.redirect(state.currentUrl);
     }
 }

@@ -97,7 +97,9 @@ class App {
         this.app.get('/admin/user/shared_with', [isAuthenticated(), asyncHandler(RolesAdminSrv.getUsersAllowed)]);
         this.app.put('/admin/user/shared_with', [isAuthenticated(), asyncHandler(RolesAdminSrv.writeUsersAllowed)]);
         this.app.put('/admin/user/tokens', [isAuthenticated(), asyncHandler(RolesAdminSrv.saveGoogleTokens)]);
-        
+        this.app.post('/admin/user/calendar/allow', [isAuthenticated(), asyncHandler(RolesAdminSrv.calendarConnect)]);
+        this.app.get('/admin/user/calendar/allow/callback', [asyncHandler(RolesAdminSrv.calendarConnectCallback)]);
+
 
         this.app.put('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.addRole)]);
         this.app.put('/admin/user/roles_all', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.setRoles)]);
