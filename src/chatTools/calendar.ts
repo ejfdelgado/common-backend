@@ -13,7 +13,7 @@ export async function calendarSearchEvent(
         tool.id,
         tool.calendarMaxEvents,
         tool.calendarMinHoursGap,
-        tool.calendarEmptyEvents === true,
+        tool.calendarMaxGuests,
         tool.calendarKeyword,
     );
     const castedEvent = (events as CalendarEventType[] | null);
