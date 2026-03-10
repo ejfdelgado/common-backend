@@ -1,5 +1,5 @@
 # Stage 2: Runtime
-FROM us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:1.7.2
+FROM us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:1.7.3
 WORKDIR /app
 
 # erase all
