@@ -23,7 +23,7 @@ export async function calendarSearchEvent(
         message = error ? error : "No schedule found. Try later.";
         success = false;
     } else {
-        message = castedEvent.map(e => `- ${e.start.dateTime} (${e.start.timeZone})`).join(". ");
+        message = castedEvent.map(e => `- id: ${e.id} date: ${e.start.dateTime} (${e.start.timeZone})`).join(".\n");
     }
     return {
         name: tool.name,

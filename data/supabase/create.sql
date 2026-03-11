@@ -41,3 +41,15 @@ CREATE INDEX article_created_at_parent ON articles (
     created_at DESC,
     id DESC
 );
+
+CREATE POLICY "Authenticated users can CRUD on document_embeddings"
+ON document_embeddings
+FOR ALL
+TO authenticated
+USING (true);
+
+CREATE POLICY "Authenticated users can CRUD on articles"
+ON articles
+FOR ALL
+TO authenticated
+USING (true);

@@ -14,7 +14,7 @@ import JSEncrypt from 'jsencrypt';
 import { makeJsonToEncriptedTextResponse } from '../tools/General';
 import { marked } from 'marked';
 import { SupabaseSrv } from './supabase';
-import { calendarSearchEvent } from '../chatTools/calendar';
+import { calendarSearchEvent } from '../chatTools/calendarSearch';
 import { gescriptionOrNone, normalizeName, sendEmail } from '../chatTools/sendEmail';
 import { searchArticle } from '../chatTools/searchArticle';
 import { addGuestToMeeting } from '../chatTools/addGuestToMeeting';

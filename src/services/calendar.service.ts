@@ -16,14 +16,17 @@ export class CalendarService {
         }
         const millis = Date.now() + (1000 * 60 * 60 * hoursGap);
         const timeMin = new Date(millis).toISOString();
-        const res = await calendar.events.list({
+        const query: any = {
             calendarId: 'primary',
             timeMin: timeMin,
             maxResults: max,
             singleEvents: true,
             orderBy: 'startTime',
-            q: typeKeyword,
-        });
+        };
+        if (typeKeyword.trim().length > 0) {
+            query.q = typeKeyword;
+        }
+        const res = await calendar.events.list(query);
 
         const events = res.data.items;
         if (!events || events.length === 0) {
