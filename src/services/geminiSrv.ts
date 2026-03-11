@@ -18,6 +18,7 @@ import { calendarSearchEvent } from '../chatTools/calendarSearch';
 import { gescriptionOrNone, normalizeName, sendEmail } from '../chatTools/sendEmail';
 import { searchArticle } from '../chatTools/searchArticle';
 import { addGuestToMeeting } from '../chatTools/addGuestToMeeting';
+import { decode } from '@msgpack/msgpack';
 
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
@@ -79,6 +80,8 @@ export class GeminiSrv {
     }
 
     static async generate(req: Request, res: Response) {
+        const bodyText: any = decode(req.body.data);
+        const body = JSON.parse(bodyText);
         const {
             history,
             config,
@@ -88,7 +91,7 @@ export class GeminiSrv {
             extra,
             state,
             useFacts,
-        } = req.body;
+        } = body;
         const historyNoNull: any[] = history instanceof Array ? history : [];
         //console.log(JSON.stringify(state, null, 4));
         const castedConfig: GenerateContentConfig = config;
