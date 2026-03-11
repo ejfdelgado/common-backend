@@ -190,9 +190,9 @@ export class GeminiSrv {
                                     toolResponse = await sendEmail(tool, reportHistory, state, author, extra.assistantId);
                                 } else if (tool.type == "article") {
                                     toolResponse = await searchArticle(tool, reportHistory, extra.assistantId, extra.q);
-                                } else if (tool.type == "calendar") {
+                                } else if (tool.type == "calendar_search") {
                                     toolResponse = await calendarSearchEvent(tool, reportHistory, extra.assistantId, extra.q);
-                                } else if (tool.type == "select_event") {
+                                } else if (tool.type == "calendar_add_guest") {
                                     toolResponse = await addGuestToMeeting(tool, reportHistory, extra.assistantId, extra.q);
                                 } else {
                                     toolResponse = {

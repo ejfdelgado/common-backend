@@ -1,4 +1,5 @@
 import { CalendarService } from "../services/calendar.service";
+import { epochTo } from "../tools/DateUtils";
 import { CalendarEventType, ToolDataType, ToolResponseType } from "../types";
 
 export async function calendarSearchEvent(
@@ -23,7 +24,7 @@ export async function calendarSearchEvent(
         message = error ? error : "No schedule found. Try later.";
         success = false;
     } else {
-        message = castedEvent.map(e => `- id: ${e.id} date: ${e.start.dateTime} (${e.start.timeZone})`).join(".\n");
+        message = castedEvent.map(e => `- id: ${e.id} date: ${epochTo(new Date(e.start.dateTime).getTime(), 'v5')} (${e.start.timeZone})`).join(".\n");
     }
     return {
         name: tool.name,
