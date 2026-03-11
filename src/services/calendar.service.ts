@@ -121,7 +121,7 @@ export class CalendarService {
         }
 
 
-        const meetingsWithoutGuests = eventsFound.filter(event => {
+        const meetingsWithoutHost = eventsFound.filter(event => {
             if (!event.attendees) {
                 // no guests
                 return true;
@@ -148,10 +148,10 @@ export class CalendarService {
                 }
             }
         });
-        if (meetingsWithoutGuests.length == 0) {
+        if (meetingsWithoutHost.length == 0) {
             return null;
         }
-        return meetingsWithoutGuests;
+        return meetingsWithoutHost;
     }
 
     static async search(req: AuthenticatedRequest, res: Response) {
