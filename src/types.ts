@@ -71,6 +71,7 @@ export interface ToolDataType extends SimpleDataType {
     calendarMinHoursGap?: number;
     calendarMaxGuests?: number;
     calendarMaxEvents?: number;
+    action?: string;
 };
 
 export type SearchLangsType = "en" | "es" | "multi";

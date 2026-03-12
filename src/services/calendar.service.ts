@@ -181,6 +181,57 @@ export class CalendarService {
         res.status(200).json(response);
     }
 
+
+    static async removeGuestToMeeting(
+        parentRawId: string,
+        toolRawId: string,
+        eventArg: any,
+        guestEmail: string,
+        user?: AuthenticatedUser
+    ) {
+        let eventId: string = "";
+        if (typeof eventArg == "string") {
+            eventId = eventArg;
+        } else {
+            eventId = eventArg.id;
+        }
+        const {
+            auth,
+            tool,
+        } = await CalendarService.preprocessRequest(parentRawId, toolRawId, user);
+
+        const calendar = google.calendar({ version: 'v3', auth });
+
+        // 1. Fetch the current event to get the existing attendee list
+        const event = await calendar.events.get({
+            calendarId: 'primary',
+            eventId: eventId,
+        });
+
+        let attendees = event.data.attendees || [];
+
+        // 2. Check if guest is already there
+        const alreadyInvited = attendees.some(a => a.email === guestEmail);
+
+        if (alreadyInvited) {
+            //All except the current guestEmail
+            attendees = attendees.filter(a => a.email !== guestEmail);
+
+            // 3. Patch the event with the new attendee list
+            await calendar.events.patch({
+                calendarId: 'primary',
+                eventId: eventId,
+                sendUpdates: 'all', // THIS IS KEY: It triggers the invite and calendar sync
+                requestBody: {
+                    attendees: attendees,
+                },
+            });
+            return true;
+        } else {
+            return true;
+        }
+    }
+
     static async addGuestToMeeting(
         parentRawId: string,
         toolRawId: string,

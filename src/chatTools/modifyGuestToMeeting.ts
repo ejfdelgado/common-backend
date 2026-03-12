@@ -1,7 +1,7 @@
 import { CalendarService } from "../services/calendar.service";
 import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
 
-export async function addGuestToMeeting(
+export async function modifyGuestToMeeting(
     tool: ToolDataType,
     history: any[],
     assistantId: string,
@@ -17,7 +17,11 @@ export async function addGuestToMeeting(
         message = "Error scheduling, try later.";
         success = false;
     } else {
-        await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
+        if (tool.action == "add") {
+            await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
+        } else if (tool.action == "remove") {
+            await CalendarService.removeGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
+        }
     }
 
     return {

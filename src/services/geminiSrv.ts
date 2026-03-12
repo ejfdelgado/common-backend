@@ -17,7 +17,7 @@ import { SupabaseSrv } from './supabase';
 import { calendarSearchEvent } from '../chatTools/calendarSearch';
 import { gescriptionOrNone, normalizeName, sendEmail } from '../chatTools/sendEmail';
 import { searchArticle } from '../chatTools/searchArticle';
-import { addGuestToMeeting } from '../chatTools/addGuestToMeeting';
+import { modifyGuestToMeeting } from '../chatTools/modifyGuestToMeeting';
 import { decode } from '@msgpack/msgpack';
 
 const renderer: any = {
@@ -195,8 +195,8 @@ export class GeminiSrv {
                                     toolResponse = await searchArticle(tool, reportHistory, extra.assistantId, extra.q);
                                 } else if (tool.type == "calendar_search") {
                                     toolResponse = await calendarSearchEvent(tool, reportHistory, extra.assistantId, extra.q);
-                                } else if (tool.type == "calendar_add_guest") {
-                                    toolResponse = await addGuestToMeeting(tool, reportHistory, extra.assistantId, extra.q);
+                                } else if (tool.type == "calendar_write_guest") {
+                                    toolResponse = await modifyGuestToMeeting(tool, reportHistory, extra.assistantId, extra.q);
                                 } else {
                                     toolResponse = {
                                         name: call.name,
