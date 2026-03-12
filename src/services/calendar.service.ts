@@ -105,7 +105,11 @@ export class CalendarService {
 
         const { calendarKeyword } = tool;
 
-        let keyword = calendarKeyword;
+        let keyword = "";
+        if (typeof calendarKeyword == "string") {
+            keyword = calendarKeyword;
+        }
+
         if (text) {
             keyword = text;
         }
@@ -180,11 +184,16 @@ export class CalendarService {
     static async addGuestToMeeting(
         parentRawId: string,
         toolRawId: string,
-        eventId: string,
+        eventArg: any,
         guestEmail: string,
         user?: AuthenticatedUser
     ) {
-
+        let eventId: string = "";
+        if (typeof eventArg == "string") {
+            eventId = eventArg;
+        } else {
+            eventId = eventArg.id;
+        }
         const {
             auth,
             tool,

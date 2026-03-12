@@ -7,18 +7,17 @@ export async function addGuestToMeeting(
     assistantId: string,
     userQuery: string,
 ): Promise<ToolResponseType | null> {
-    const { error, ok } = tool;
 
     const argEmail = tool.args.find(a => /email|correo/ig.exec(a.name) != null);
-    const argId = tool.args.find(a => /id|evento/ig.exec(a.name) != null);
+    const event = tool.args.find(a => /id|event/ig.exec(a.name) != null);
 
-    let message: string | InnerToolResponseType = ok ? ok : "Ok";
+    let message: string | InnerToolResponseType = "Ok";
     let success = true;
-    if (!argEmail || !argId) {
-        message = error ? error : "Error scheduling, try later.";
+    if (!argEmail || !event) {
+        message = "Error scheduling, try later.";
         success = false;
     } else {
-        await CalendarService.addGuestToMeeting(assistantId, tool.id, argId.val, argEmail.val);
+        await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
     }
 
     return {

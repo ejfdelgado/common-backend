@@ -207,6 +207,8 @@ export class GeminiSrv {
                                 toolResponse = {
                                     name: call.name,
                                     message: err.message,
+                                    // The errors are not shoed to the user
+                                    hidden: true,
                                 };
                             }
                             if (toolResponse) {

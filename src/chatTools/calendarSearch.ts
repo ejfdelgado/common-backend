@@ -8,7 +8,6 @@ export async function calendarSearchEvent(
     assistantId: string,
     userQuery: string,
 ): Promise<ToolResponseType | null> {
-    const { error } = tool;
     const events = await CalendarService.searchInternal(
         assistantId,
         tool.id,
@@ -23,8 +22,8 @@ export async function calendarSearchEvent(
     if (!castedEvent) {
         message = {
             success: false,
-            data: null,
-            error: error ? error : "No schedule found. Try later."
+            data: [],
+            error: "No schedule found. Try later."
         };
         success = false;
     } else {
@@ -39,7 +38,6 @@ export async function calendarSearchEvent(
                 }
             }),
         };
-        console.log(JSON.stringify(message, null, 4));
     }
     return {
         name: tool.name,
