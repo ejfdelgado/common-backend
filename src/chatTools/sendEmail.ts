@@ -1,5 +1,5 @@
 import { MyTuples, SimpleObj } from "ejfdelgado-common-ts";
-import { AssistantStateType, ToolDataType } from "../types";
+import { AssistantStateType, InnerToolResponseType, ToolDataType } from "../types";
 import { marked } from 'marked';
 import { randomUUID } from 'crypto';
 import { EmailHandler } from "../services/email";
@@ -57,7 +57,7 @@ export async function sendEmail(
         }
     }
     let success = true;
-    let message = replaceArguments(tool.ok ? tool.ok : "Ok default message.", tool.args);
+    let message: string | InnerToolResponseType = replaceArguments(tool.ok ? tool.ok : "Ok default message.", tool.args);
     try {
         // Iterate history to use MD when needed
         history.forEach((message) => {

@@ -1,6 +1,6 @@
 import { CalendarService } from "../services/calendar.service";
 import { epochTo } from "../tools/DateUtils";
-import { CalendarEventType, ToolDataType, ToolResponseType } from "../types";
+import { CalendarEventType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
 
 export async function calendarSearchEvent(
     tool: ToolDataType,
@@ -18,13 +18,28 @@ export async function calendarSearchEvent(
         tool.calendarKeyword,
     );
     const castedEvent = (events as CalendarEventType[] | null);
-    let message = "";
+    let message: string | InnerToolResponseType = "";
     let success = true;
     if (!castedEvent) {
-        message = error ? error : "No schedule found. Try later.";
+        message = {
+            success: false,
+            data: null,
+            error: error ? error : "No schedule found. Try later."
+        };
         success = false;
     } else {
-        message = castedEvent.map(e => `- id: ${e.id} date: ${epochTo(new Date(e.start.dateTime).getTime(), 'v5')} (${e.start.timeZone})`).join(".\n");
+        message = {
+            error: null,
+            success: true,
+            data: castedEvent.map((e) => {
+                return {
+                    id: e.id,
+                    date: epochTo(new Date(e.start.dateTime).getTime(), 'v5'),
+                    timeZone: e.start.timeZone,
+                }
+            }),
+        };
+        console.log(JSON.stringify(message, null, 4));
     }
     return {
         name: tool.name,

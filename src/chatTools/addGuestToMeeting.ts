@@ -1,5 +1,5 @@
 import { CalendarService } from "../services/calendar.service";
-import { ToolDataType, ToolResponseType } from "../types";
+import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
 
 export async function addGuestToMeeting(
     tool: ToolDataType,
@@ -12,7 +12,7 @@ export async function addGuestToMeeting(
     const argEmail = tool.args.find(a => /email|correo/ig.exec(a.name) != null);
     const argId = tool.args.find(a => /id|evento/ig.exec(a.name) != null);
 
-    let message = ok ? ok : "Ok";
+    let message: string | InnerToolResponseType = ok ? ok : "Ok";
     let success = true;
     if (!argEmail || !argId) {
         message = error ? error : "Error scheduling, try later.";

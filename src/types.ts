@@ -95,9 +95,15 @@ export interface AssistantDataType extends BasicDataType {
     useFacts?: boolean;
 }
 
+export interface InnerToolResponseType {
+    success: boolean;
+    data: any,
+    error: null | string;
+}
+
 export interface ToolResponseType {
     name: string;
-    message: string;
+    message: string | InnerToolResponseType;
     hidden?: boolean;
     success?: boolean;
     articles?: ArticleDataType[];

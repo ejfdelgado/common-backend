@@ -1,6 +1,6 @@
 import { MyStore } from "../services/firestore";
 import { SupabaseSrv } from "../services/supabase";
-import { ToolDataType, ToolResponseType } from "../types";
+import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
 import { replaceArguments } from "./sendEmail";
 
 export async function searchArticle(
@@ -11,7 +11,7 @@ export async function searchArticle(
 ): Promise<ToolResponseType | null> {
     const { error, keywords } = tool;
     const success: boolean = true;
-    let message = "";
+    let message: string | InnerToolResponseType = "";
 
     const searched: string[] = tool.args.map((arg: any) => arg.val);
 

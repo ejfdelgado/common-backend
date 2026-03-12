@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, ToolResponseType } from '../types';
+import { ApiResponse, InnerToolResponseType, ToolResponseType } from '../types';
 import {
     Content,
     GenerateContentResponse,
@@ -179,7 +179,7 @@ export class GeminiSrv {
                     if (call.name) {
                         const tool = getToolByName(call.name);
                         let toolResponse: ToolResponseType | null = null;
-                        let toolMessage = "ok";
+                        let toolMessage: string | InnerToolResponseType = "ok";
                         if (tool) {
                             tool.args.forEach((arg: any) => {
                                 const normalizedName = normalizeName(arg.name);
