@@ -4,6 +4,7 @@ import { Response } from 'express';
 import { MyStore } from "./firestore";
 import { NoAutorizadoException } from "../errors";
 import { google } from "googleapis";
+import { RolesAdminSrv } from "./rolesAdmin";
 
 export class CalendarService {
 
@@ -56,24 +57,7 @@ export class CalendarService {
 
         const { calendarUser } = tool;
 
-        if (!calendarUser || !calendarUser.uid) {
-            throw new NoAutorizadoException("Calendar user not configured");
-        }
-
-        // Get the refreshToken
-        const personal = await MyStore.readById("personal", calendarUser.uid);
-
-        if (!personal) {
-            throw new NoAutorizadoException("User did not grant permissions");
-        }
-
-        const { refreshToken } = personal;
-
-        const auth = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET
-        );
-        auth.setCredentials({ refresh_token: refreshToken });
+        const { auth } = await RolesAdminSrv.getOfflineAuth(calendarUser);
         return {
             auth,
             tool,

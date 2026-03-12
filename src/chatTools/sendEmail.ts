@@ -1,5 +1,5 @@
 import { MyTuples, SimpleObj } from "ejfdelgado-common-ts";
-import { AssistantStateType, InnerToolResponseType, ToolDataType } from "../types";
+import { AssistantStateType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
 import { marked } from 'marked';
 import { randomUUID } from 'crypto';
 import { EmailHandler } from "../services/email";
@@ -47,7 +47,7 @@ export async function sendEmail(
     author: string,
     assistantId: string,
     template: string = "mails/chat_history_orig.html",
-) {
+): Promise<ToolResponseType | null> {
     // Simplify last message:
     if (history.length > 0 && history[history.length - 1].parts.length > 0) {
         let lastMessage = history[history.length - 1].parts[0].text;
@@ -57,7 +57,7 @@ export async function sendEmail(
         }
     }
     let success = true;
-    let message: string | InnerToolResponseType = replaceArguments(tool.ok ? tool.ok : "Ok default message.", tool.args);
+    let message: string | InnerToolResponseType = "Email sent";
     try {
         // Iterate history to use MD when needed
         history.forEach((message) => {
@@ -98,6 +98,7 @@ export async function sendEmail(
             subject: `Assistant - ${tool.name} - ${year}/${month}/${date} ${hour}:${minutes}:${seconds}`,
             template: customTemplate,
             to: tool.to,
+            gmailUser: tool.gmailUser,
         }, true, undefined, false, false);
 
         const { contenidoFinal, result } = response;
@@ -123,12 +124,13 @@ export async function sendEmail(
     } catch (err) {
         console.log(err);
         success = false;
-        message = replaceArguments(tool.error ? tool.error : "Error default message.", tool.args);
+        message = "Error sending email";
     }
 
     return {
         name: tool.name,
         message,
         success,
+        hidden: true,
     };
 }

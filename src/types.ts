@@ -53,7 +53,7 @@ export interface ArgumentDataType {
 }
 
 export interface ToolDataType extends SimpleDataType {
-    type: "mail" | "article";
+    type: "mail" | "article" | "basic" | "calendar_search" | "calendar_write_guest";
     name: string;
     desc: string;
     to?: string;
@@ -71,6 +71,8 @@ export interface ToolDataType extends SimpleDataType {
     calendarMinHoursGap?: number;
     calendarMaxGuests?: number;
     calendarMaxEvents?: number;
+    gmailUser?: AuthenticatedUser | null,
+    message?: string | InnerToolResponseType;
     action?: string;
 };
 

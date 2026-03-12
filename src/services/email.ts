@@ -4,7 +4,9 @@ import { General } from '../tools/General';
 import { InesperadoException } from "../errors";
 import { BucketsSrv } from "./bucket";
 import { MyTemplate, sortify } from "ejfdelgado-common-ts";
-import { ApiResponse, AuthenticatedRequest } from "../types";
+import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from "../types";
+import { RolesAdminSrv } from "./rolesAdmin";
+import { google } from "googleapis";
 
 export interface SendRequestType {
   template: string;
@@ -13,6 +15,7 @@ export interface SendRequestType {
   subject: string;
   to?: string[] | string;
   replyTo?: string;
+  gmailUser?: AuthenticatedUser | null,
 }
 
 export class EmailHandler {
@@ -82,10 +85,62 @@ export class EmailHandler {
     const reponse: any = { msg, contenidoFinal };
 
     if (send) {
-      if (waitSend) {
-        reponse.result = await sgMail.send(msg);
+      if (body.gmailUser) {
+        console.log("Using gmail sender...");
+        const { auth } = await RolesAdminSrv.getOfflineAuth(body.gmailUser);
+        const gmail = google.gmail({
+          version: 'v1',
+          auth: auth
+        });
+
+        let tos = msg.to;
+        if (tos instanceof Array) {
+          tos = tos.join(', ');
+        }
+
+        const message = [
+          `From: "${body.gmailUser.displayName}" <${body.gmailUser.email}>`,
+          `To: ${tos}`,
+          `Subject: ${msg.subject}`,
+          'Content-Type: multipart/alternative; boundary="boundary123"',
+          '',
+          '--boundary123',
+          'Content-Type: text/plain; charset="UTF-8"',
+          '',
+          'Plain text version',
+          '',
+          '--boundary123',
+          'Content-Type: text/html; charset="UTF-8"',
+          '',
+          contenidoFinal,
+          '',
+          '--boundary123--'
+        ].join('\r\n')
+
+        const encodedMessage = Buffer.from(message)
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        const res = await gmail.users.messages.send({
+          userId: 'me',
+          requestBody: {
+            raw: encodedMessage
+          }
+        });
+        //console.log(`res.status = ${res.status}`);
+        //res.status;
+        //(res as any)
+        if (!res.data?.id) {
+          throw new InesperadoException("Email error");
+        }
       } else {
-        reponse.result = sgMail.send(msg);
+        if (waitSend) {
+          reponse.result = await sgMail.send(msg);
+        } else {
+          reponse.result = sgMail.send(msg);
+        }
       }
     }
 

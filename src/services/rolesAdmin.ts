@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import { Response } from 'express';
-import { ApiResponse, AuthenticatedRequest } from '../types';
+import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types';
 import { General } from '../tools/General';
 import { MyStore } from './firestore';
 import { NoAutorizadoException } from '../errors';
@@ -237,5 +237,29 @@ export class RolesAdminSrv {
 
         // Redirect to
         res.redirect(state.currentUrl);
+    }
+
+    static async getOfflineAuth(calendarUser?: AuthenticatedUser | null) {
+        if (!calendarUser || !calendarUser.uid) {
+            throw new NoAutorizadoException("Calendar user not configured");
+        }
+
+        // Get the refreshToken
+        const personal = await MyStore.readById("personal", calendarUser.uid);
+
+        if (!personal) {
+            throw new NoAutorizadoException("User did not grant permissions");
+        }
+
+        const { refreshToken } = personal;
+
+        const auth = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET
+        );
+        auth.setCredentials({ refresh_token: refreshToken });
+        return {
+            auth,
+        };
     }
 }
