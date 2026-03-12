@@ -179,53 +179,23 @@ export class RolesAdminSrv {
         res.status(200).json(response);
     }
 
-    static async saveGoogleTokens(req: AuthenticatedRequest, res: Response) {
-        const credential = General.readParam(req, "credential", "", true);
-        const user = req.user;
-        if (!user) {
-            throw new NoAutorizadoException("");
-        }
-        const oauth2Client = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET,
-            process.env.GOOGLE_REDIRECT_URI
-        );
-
-        //idToken
-        //accessToken
-        //pendingToken
-        //providerId
-        //signInMethod
-        const { tokens } = await oauth2Client.getToken(credential.accessToken);
-
-        console.log(JSON.stringify(tokens, null, 4));
-
-        /*
-        // Store the refresh token securely in Firestore
-        await admin.firestore().collection('users').doc(uid).set({
-            googleRefreshToken: tokens.refresh_token,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        */
-        const response: ApiResponse = {
-            success: true,
-            message: 'Ok',
-            data: "Ok",
-            timestamp: new Date()
-        };
-        res.status(200).json(response);
-    }
-
     static async calendarConnect(req: AuthenticatedRequest, res: Response) {
         const currentUrl = General.readParam(req, "currentUrl", "", true);
+        const scopeArray = General.readParam(req, "scopes", [], true);
         const user = req.user;
         if (!user) {
             throw new NoAutorizadoException("");
         }
 
-        const scopes = [
-            'https://www.googleapis.com/auth/calendar.events'
-        ];
+        const scopes = [];
+
+        if (scopeArray.indexOf("calendar") >= 0) {
+            scopes.push('https://www.googleapis.com/auth/calendar.events');
+        }
+        if (scopeArray.indexOf("gmail") >= 0) {
+            scopes.push('https://www.googleapis.com/auth/gmail.send');
+            scopes.push('https://www.googleapis.com/auth/gmail.modify');
+        }
 
         const state = Buffer
             .from(JSON.stringify({ uid: user.uid, currentUrl }))
