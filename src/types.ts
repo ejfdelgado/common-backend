@@ -109,14 +109,13 @@ export interface ToolResponseType {
     message: string | InnerToolResponseType;
     hidden?: boolean;
     success?: boolean;
-    articles?: ArticleDataType[];
     events?: CalendarEventType[] | null;
 }
 
 export interface ArticleDataType extends SimpleDataType {
+    type: string;
     keywords: string;
-    desc: string;
-    gallery?: any;
+    metadata?: any;
 };
 
 export interface CalendarEventType {

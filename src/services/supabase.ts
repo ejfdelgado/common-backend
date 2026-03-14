@@ -2,7 +2,7 @@ import postgres from 'postgres';
 import { Request, Response } from 'express';
 import { InesperadoException, NoAutorizadoException, ParametrosIncompletosException } from '../errors';
 import { MyTemplate } from 'ejfdelgado-common-ts';
-import { ApiResponse, AuthenticatedRequest } from '../types';
+import { ApiResponse, ArticleDataType, AuthenticatedRequest } from '../types';
 import { setDefaultResultOrder } from 'node:dns';
 import { General } from '../tools/General';
 import { EmbedSrv } from './embeed.service';
@@ -408,13 +408,14 @@ export class SupabaseSrv {
         parent: string,
         q1: string,
         n: number,
-    ) {
+    ): Promise<ArticleDataType[]> {
         const q = preprocessSearchText(q1);
         const sql = SupabaseSrv.getConnection();
         const results = await sql`
         SELECT 
             id, 
             type,
+            keywords,
             metadata,
             created_at as created
         FROM articles
@@ -424,7 +425,7 @@ export class SupabaseSrv {
         `;
         SupabaseSrv.assureMetadataJson(results);
         return results
-            .map((row: any) => { row.metadata.created = parseInt(row.created); return row; });
+            .map((row: any) => { row.created = parseInt(row.created); return row; });
     }
 
     static async searchArticle(req: AuthenticatedRequest, res: Response) {

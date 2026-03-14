@@ -1,7 +1,6 @@
 import { MyStore } from "../services/firestore";
 import { SupabaseSrv } from "../services/supabase";
 import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
-import { replaceArguments } from "./sendEmail";
 
 export async function searchArticle(
     tool: ToolDataType,
@@ -9,7 +8,7 @@ export async function searchArticle(
     assistantId: string,
     userQuery: string,
 ): Promise<ToolResponseType | null> {
-    const { error, keywords } = tool;
+    const { keywords } = tool;
     const success: boolean = true;
     let message: string | InnerToolResponseType = "";
 
@@ -20,7 +19,11 @@ export async function searchArticle(
     const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
 
     if (matches.length == 0) {
-        message = replaceArguments(error ? error : "Not found", tool.args);
+        message = {
+            data: [],
+            error: null,
+            success: true,
+        };
         // No need to wait, maybe...
         MyStore.create(`knowledge/${assistantId}/history`, {
             checked: false,
@@ -31,13 +34,16 @@ export async function searchArticle(
             created: Date.now(),
         });
     } else {
-        message = replaceArguments(matches[0].desc, tool.args);
+        message = message = {
+            data: matches,
+            error: null,
+            success: true,
+        };
     }
 
     return {
         name: tool.name,
         message,
         success,
-        articles: matches,
     };
 }
