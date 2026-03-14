@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { FileMetadata, Storage, File as GFile } from "@google-cloud/storage";
-import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types';
+import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types/types';
 import { General } from '../tools/General';
 import { InesperadoException, NoAutorizadoException } from '../errors';
 

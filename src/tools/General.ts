@@ -3,7 +3,7 @@ import { ParametrosIncompletosException } from '../errors';
 import { Request, Response, NextFunction } from "express";
 import { decode } from 'html-entities';
 import { encode } from "@msgpack/msgpack";
-import { ApiResponse } from '../types';
+import { ApiResponse } from '../types/types';
 import { AES } from 'crypto-js';
 
 export function asyncHandler<T extends (req: Request, res: Response, next: NextFunction) => any>(

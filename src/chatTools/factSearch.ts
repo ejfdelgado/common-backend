@@ -2,21 +2,25 @@ import { MyStore } from "../services/firestore";
 import { SupabaseSrv } from "../services/supabase";
 import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 
-export async function searchArticle(
+export async function searchFact(
     tool: ToolDataType,
     history: any[],
     assistantId: string,
     userQuery: string,
 ): Promise<ToolResponseType | null> {
-    const { keywords } = tool;
+    let { factsMaxMatches, factsMinDistance } = tool;
     const success: boolean = true;
     let message: string | InnerToolResponseType = "";
 
     const searched: string[] = tool.args.map((arg: any) => arg.val);
 
-    const completeSearch = keywords + " " + [...searched].join(" ");
+    const completeSearch = [...searched].join(" ");
 
-    const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
+    if (typeof factsMinDistance == "number" && !isNaN(factsMinDistance)) {
+        factsMinDistance = factsMinDistance / 100;
+    }
+
+    const matches = await SupabaseSrv.searchEmbeedInternal(assistantId, completeSearch, factsMinDistance, factsMaxMatches);
 
     if (matches.length == 0) {
         message = {

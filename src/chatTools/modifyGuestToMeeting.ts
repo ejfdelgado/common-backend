@@ -1,5 +1,5 @@
 import { CalendarService } from "../services/calendar.service";
-import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
+import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 
 export async function modifyGuestToMeeting(
     tool: ToolDataType,

@@ -2,7 +2,7 @@ import postgres from 'postgres';
 import { Request, Response } from 'express';
 import { InesperadoException, NoAutorizadoException, ParametrosIncompletosException } from '../errors';
 import { MyTemplate } from 'ejfdelgado-common-ts';
-import { ApiResponse, ArticleDataType, AuthenticatedRequest } from '../types';
+import { ApiResponse, ArticleDataType, AuthenticatedRequest } from '../types/types';
 import { setDefaultResultOrder } from 'node:dns';
 import { General } from '../tools/General';
 import { EmbedSrv } from './embeed.service';
@@ -134,8 +134,8 @@ export class SupabaseSrv {
     static async searchEmbeedInternal(
         parent: string,
         q: string,
-        distance: number,
-        n: number,
+        distance: number = 0.6,
+        n: number = 1,
 
     ) {
         const embed = await EmbedSrv.embed(q);

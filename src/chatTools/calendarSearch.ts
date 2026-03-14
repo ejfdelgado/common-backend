@@ -1,6 +1,6 @@
 import { CalendarService } from "../services/calendar.service";
 import { epochTo } from "../tools/DateUtils";
-import { CalendarEventType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
+import { CalendarEventType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 
 export async function calendarSearchEvent(
     tool: ToolDataType,

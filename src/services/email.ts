@@ -4,7 +4,7 @@ import { General } from '../tools/General';
 import { InesperadoException } from "../errors";
 import { BucketsSrv } from "./bucket";
 import { MyTemplate, sortify } from "ejfdelgado-common-ts";
-import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from "../types";
+import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from "../types/types";
 import { RolesAdminSrv } from "./rolesAdmin";
 import { google } from "googleapis";
 

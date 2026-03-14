@@ -4,7 +4,7 @@ import { CustomError } from './errors';
 import { HealthSrv } from "./services/health";
 import { asyncHandler } from "./tools/General";
 import { BucketsSrv } from "./services/bucket";
-import { ApiResponse, AuthenticatedRequest } from './types';
+import { ApiResponse } from './types/types';
 import multer from 'multer';
 import { HardDriveSrv } from './services/hardDrive';
 import { MySQLSrv } from './services/mysql';

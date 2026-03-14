@@ -1,5 +1,5 @@
 import { General } from "../tools/General";
-import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from "../types";
+import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from "../types/types";
 import { Response } from 'express';
 import { MyStore } from "./firestore";
 import { NoAutorizadoException } from "../errors";

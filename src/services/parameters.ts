@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse } from '../types';
+import { ApiResponse } from '../types/types';
 import { General, makeJsonToBinaryResponse } from '../tools/General';
 import NodeRSA, { EncryptionScheme } from "node-rsa";
 import JSEncrypt from 'jsencrypt';

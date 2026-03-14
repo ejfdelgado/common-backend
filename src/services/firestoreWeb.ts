@@ -1,4 +1,4 @@
-import { ApiResponse, AuthenticatedRequest } from "../types";
+import { ApiResponse, AuthenticatedRequest } from "../types/types";
 import { Response } from 'express';
 import { General, innerTextLite } from "../tools/General";
 import { MyStore } from "./firestore";

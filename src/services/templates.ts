@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { ApiResponse, AuthenticatedRequest } from '../types';
 import { escapeHtml, General, getBucketFilePath, getSquarePath, getThumbnailPath } from '../tools/General';
 import { MyStore } from './firestore';
 import { MyTemplate } from 'ejfdelgado-common-ts';

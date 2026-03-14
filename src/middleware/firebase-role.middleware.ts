@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import { AuthenticatedRequest, AuthenticatedUser } from '../types';
+import { AuthenticatedRequest, AuthenticatedUser } from '../types/types';
 import { NextFunction, Response } from 'express';
 import { NoAutorizadoException } from '../errors';
 

@@ -2,7 +2,7 @@
 import { Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
-import { AuthenticatedRequest } from "../types";
+import { AuthenticatedRequest } from "../types/types";
 
 export function keycloakJwtMiddleware(
     keycloakUrl: string,

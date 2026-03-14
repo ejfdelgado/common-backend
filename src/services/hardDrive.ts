@@ -1,4 +1,4 @@
-import { ApiResponse, AuthenticatedRequest } from '../types';
+import { ApiResponse, AuthenticatedRequest } from '../types/types';
 import { General } from '../tools/General';
 import { Response } from 'express';
 import fs from "fs";

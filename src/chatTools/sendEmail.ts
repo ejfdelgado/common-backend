@@ -1,5 +1,5 @@
 import { MyTuples, SimpleObj } from "ejfdelgado-common-ts";
-import { AssistantStateType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types";
+import { AssistantStateType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 import { marked } from 'marked';
 import { randomUUID } from 'crypto';
 import { EmailHandler } from "../services/email";

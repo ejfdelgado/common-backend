@@ -1,4 +1,4 @@
-import { ApiResponse, AuthenticatedRequest } from "../types";
+import { ApiResponse, AuthenticatedRequest } from "../types/types";
 import { createPool, Pool, PoolOptions } from "mysql2/promise";
 import { Response } from 'express';
 import { General } from "../tools/General";

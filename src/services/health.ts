@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, AuthenticatedRequest } from '../types';
+import { ApiResponse, AuthenticatedRequest } from '../types/types';
 
 export class HealthSrv {
 

@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import { Response } from 'express';
-import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types';
+import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types/types';
 import { General } from '../tools/General';
 import { MyStore } from './firestore';
 import { NoAutorizadoException } from '../errors';

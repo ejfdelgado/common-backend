@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, InnerToolResponseType, ToolResponseType } from '../types';
+import { ApiResponse, InnerToolResponseType, ToolResponseType } from '../types/types';
 import {
     Content,
     GenerateContentResponse,
@@ -20,6 +20,7 @@ import { searchArticle } from '../chatTools/searchArticle';
 import { modifyGuestToMeeting } from '../chatTools/modifyGuestToMeeting';
 import { decode } from '@msgpack/msgpack';
 import { normalizeName } from '../tools/fieldTools';
+import { searchFact } from '../chatTools/factSearch';
 
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
@@ -194,6 +195,8 @@ export class GeminiSrv {
                                     toolResponse = await sendEmail(tool, reportHistory, state, author, extra.assistantId);
                                 } else if (tool.type == "article") {
                                     toolResponse = await searchArticle(tool, reportHistory, extra.assistantId, extra.q);
+                                } else if (tool.type == "fact") {
+                                    toolResponse = await searchFact(tool, reportHistory, extra.assistantId, extra.q);
                                 } else if (tool.type == "calendar_search") {
                                     toolResponse = await calendarSearchEvent(tool, reportHistory, extra.assistantId, extra.q);
                                 } else if (tool.type == "calendar_write_guest") {

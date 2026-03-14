@@ -1,6 +1,6 @@
 import { pipeline, env } from '@xenova/transformers';
 import { General } from '../tools/General';
-import { ApiResponse } from '../types';
+import { ApiResponse } from '../types/types';
 import { Request, Response } from 'express';
 
 env.cacheDir = './.model_cache';
