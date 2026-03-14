@@ -147,7 +147,8 @@ export class SupabaseSrv {
             id, 
             (embedding <=> ${embeddingString}::vector) AS distance,
             metadata,
-            created_at
+            created_at,
+            embedding_txt
         FROM document_embeddings
         WHERE parent = ${parent}
         ORDER BY distance ASC
@@ -155,7 +156,14 @@ export class SupabaseSrv {
         `;
         SupabaseSrv.assureMetadataJson(results);
         return results.filter((row: any) => row.distance <= distance)
-            .map((row: any) => { row.metadata.created = parseInt(row.created_at); return row; });
+            .map((row: any) => {
+                row.metadata.id = row.id;
+                row.metadata.txtFormat = row.embedding_txt;
+                // Improve sended data
+                delete row.embedding_txt;
+                row.metadata.created = parseInt(row.created_at);
+                return row;
+            });
     }
 
     static async searchEmbeed(req: Request, res: Response) {
@@ -197,6 +205,11 @@ export class SupabaseSrv {
         const metadata = General.readParam(req, "metadata", {}, false);
 
         await SupabaseSrv.checkPermissions(req, parent);
+
+        delete metadata.id;
+        delete metadata.created;
+        delete metadata.updated;
+        delete metadata.txtFormat;
 
         const sql = SupabaseSrv.getConnection();
 
@@ -258,7 +271,7 @@ export class SupabaseSrv {
         if (cursor) {
             // Page subsequent results
             query = sql`
-      SELECT id, metadata, created_at 
+      SELECT id, metadata, created_at, embedding_txt
       FROM document_embeddings
       WHERE parent = ${parent} 
         AND (created_at, id) < (${cursor.createdAt}, ${cursor.id})
@@ -268,7 +281,7 @@ export class SupabaseSrv {
         } else {
             // Page the first results
             query = sql`
-      SELECT id, metadata, created_at 
+      SELECT id, metadata, created_at, embedding_txt
       FROM document_embeddings
       WHERE parent = ${parent}
       ORDER BY created_at DESC, id DESC
@@ -283,6 +296,14 @@ export class SupabaseSrv {
             : null;
 
         SupabaseSrv.assureMetadataJson(results);
+
+        results.forEach((row) => {
+            row.metadata.id = row.id;
+            row.metadata.txtFormat = row.embedding_txt;
+            // Improve
+            delete row.embedding_txt;
+            row.metadata.created = parseInt(row.created_at);
+        });
 
         const response: ApiResponse = {
             success: true,
@@ -342,7 +363,7 @@ export class SupabaseSrv {
         results = await query;
 
         const nextCursor = results.length >= limit
-            ? { createdAt: results[results.length - 1].created_at, id: results[results.length - 1].id }
+            ? { createdAt: results[results.length - 1].created, id: results[results.length - 1].id }
             : null;
 
         SupabaseSrv.assureMetadataJson(results);
