@@ -416,7 +416,7 @@ export class SupabaseSrv {
             id, 
             type,
             metadata,
-            created_at
+            created_at as created
         FROM articles
         WHERE parent = ${parent}
         AND fts_vector @@ websearch_to_tsquery('simple', ${q})
@@ -424,7 +424,7 @@ export class SupabaseSrv {
         `;
         SupabaseSrv.assureMetadataJson(results);
         return results
-            .map((row: any) => { row.metadata.created = parseInt(row.created_at); return row.metadata; });
+            .map((row: any) => { row.metadata.created = parseInt(row.created); return row; });
     }
 
     static async searchArticle(req: AuthenticatedRequest, res: Response) {
