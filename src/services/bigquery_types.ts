@@ -1,6 +1,7 @@
 export interface ArticleCreate {
   id: string;
   title: string;
+  type: string;
   path: string;// for example pro-knowledge/dfdsf546dfs/pro-fact
 }
 

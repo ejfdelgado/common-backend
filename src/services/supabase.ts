@@ -321,7 +321,7 @@ export class SupabaseSrv {
         if (cursor) {
             // Page subsequent results
             query = sql`
-      SELECT id, metadata, created_at 
+      SELECT id, type, metadata, created_at as created, keywords 
       FROM articles
       WHERE parent = ${parent} 
         AND (created_at, id) < (${cursor.createdAt}, ${cursor.id})
@@ -331,7 +331,7 @@ export class SupabaseSrv {
         } else {
             // Page the first results
             query = sql`
-      SELECT id, metadata, created_at 
+      SELECT id, type, metadata, created_at as created, keywords
       FROM articles
       WHERE parent = ${parent}
       ORDER BY created_at DESC, id DESC
@@ -364,6 +364,7 @@ export class SupabaseSrv {
         const id = General.readParam(req, "id", null, false);
         const parent = General.readParam(req, "parent", "", true);
         const q1 = General.readParam(req, "q", null, false);
+        const type = General.readParam(req, "type", null, true);
         const metadata = General.readParam(req, "metadata", {}, false);
 
         await SupabaseSrv.checkPermissions(req, parent);
@@ -389,12 +390,12 @@ export class SupabaseSrv {
             const q = preprocessSearchText(q1);
             if (!id || id.trim().length == 0) {
                 // make an insert
-                const [insertedRow] = await sql`INSERT INTO articles (parent, keywords, metadata) VALUES (${parent}, ${q}, ${metadata}) RETURNING id, created_at;`;
+                const [insertedRow] = await sql`INSERT INTO articles (parent, keywords, metadata, type) VALUES (${parent}, ${q}, ${metadata}, ${type}) RETURNING id, created_at;`;
                 response.data.action = "insert";
                 response.data.id = insertedRow.id;
                 response.data.created_at = insertedRow.created_at;
             } else {
-                await sql`UPDATE articles SET keywords = ${q}, metadata = ${metadata} WHERE id=${id} AND parent=${parent};`;
+                await sql`UPDATE articles SET keywords = ${q}, metadata = ${metadata}, type=${type} WHERE id=${id} AND parent=${parent};`;
                 response.data.action = "update";
                 response.data.id = id;
             }
@@ -413,6 +414,7 @@ export class SupabaseSrv {
         const results = await sql`
         SELECT 
             id, 
+            type,
             metadata,
             created_at
         FROM articles

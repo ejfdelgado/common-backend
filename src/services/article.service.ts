@@ -8,6 +8,7 @@ export const TABLE_PATH = `${process.env.GCP_PROJECT_ID}.${DATASET}.${TABLE}`;
 export async function createArticle(article: ArticleCreate) {
     const row = {
         id: article.id,
+        type: article.type,
         title: article.title,
         path: article.path,
         created_at: new Date(),
