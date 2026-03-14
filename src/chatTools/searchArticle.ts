@@ -14,7 +14,10 @@ export async function searchArticle(
 
     const searched: string[] = tool.args.map((arg: any) => arg.val);
 
-    const completeSearch = keywords + " " + [...searched].join(" ");
+    if (typeof keywords == "string" && keywords.length > 0) {
+        searched.push(keywords);
+    }
+    const completeSearch = [...searched].join(" ");
 
     const matches = await SupabaseSrv.searchArticleInternal(assistantId, completeSearch, 1);
 
