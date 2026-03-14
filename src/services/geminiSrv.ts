@@ -15,10 +15,11 @@ import { makeJsonToEncriptedTextResponse } from '../tools/General';
 import { marked } from 'marked';
 import { SupabaseSrv } from './supabase';
 import { calendarSearchEvent } from '../chatTools/calendarSearch';
-import { gescriptionOrNone, normalizeName, sendEmail } from '../chatTools/sendEmail';
+import { gescriptionOrNone, sendEmail } from '../chatTools/sendEmail';
 import { searchArticle } from '../chatTools/searchArticle';
 import { modifyGuestToMeeting } from '../chatTools/modifyGuestToMeeting';
 import { decode } from '@msgpack/msgpack';
+import { normalizeName } from '../tools/fieldTools';
 
 const renderer: any = {
     link({ href, raw, text, tokens, type }: any) {
