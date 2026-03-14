@@ -47,6 +47,7 @@ export async function searchFact(
 
     return {
         name: tool.name,
+        type: tool.type,
         message,
         success,
     };

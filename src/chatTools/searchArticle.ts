@@ -43,6 +43,7 @@ export async function searchArticle(
 
     return {
         name: tool.name,
+        type: tool.type,
         message,
         success,
     };

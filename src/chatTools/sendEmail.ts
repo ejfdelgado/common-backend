@@ -109,6 +109,7 @@ export async function sendEmail(
 
     return {
         name: tool.name,
+        type: tool.type,
         message,
         success,
         hidden: true,

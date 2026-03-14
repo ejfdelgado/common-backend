@@ -41,6 +41,7 @@ export async function calendarSearchEvent(
     }
     return {
         name: tool.name,
+        type: tool.type,
         message,
         success,
         events: castedEvent,

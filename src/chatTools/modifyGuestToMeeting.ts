@@ -26,6 +26,7 @@ export async function modifyGuestToMeeting(
 
     return {
         name: tool.name,
+        type: tool.type,
         message,
         success,
         hidden: true,

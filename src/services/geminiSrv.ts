@@ -204,12 +204,14 @@ export class GeminiSrv {
                                 } else {
                                     toolResponse = {
                                         name: call.name,
+                                        type: tool.type,
                                         message: "",
                                     };
                                 }
                             } catch (err: any) {
                                 toolResponse = {
                                     name: call.name,
+                                    type: tool.type,
                                     message: err.message,
                                     // The errors are not shoed to the user
                                     hidden: true,

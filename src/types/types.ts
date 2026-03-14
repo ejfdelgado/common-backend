@@ -52,8 +52,10 @@ export interface ArgumentDataType {
     modelIsArray?: boolean;
 }
 
+export type ToolFieldType = "mail" | "article" | "fact" | "basic" | "calendar_search" | "calendar_write_guest";
+
 export interface ToolDataType extends SimpleDataType {
-    type: "mail" | "article" | "fact" | "basic" | "calendar_search" | "calendar_write_guest";
+    type: ToolFieldType,
     name: string;
     desc: string;
     to?: string;
@@ -108,6 +110,7 @@ export interface InnerToolResponseType {
 
 export interface ToolResponseType {
     name: string;
+    type: ToolFieldType;
     message: string | InnerToolResponseType;
     hidden?: boolean;
     success?: boolean;
