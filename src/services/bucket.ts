@@ -54,7 +54,7 @@ export class BucketsSrv {
 
         if ((await BucketsSrv.fileExists(bucket_name, file_path))) {
             const [metadata] = await gcsFile.getMetadata();
-            BucketsSrv.checkFilePermissions(metadata, "write", req.user);
+            await BucketsSrv.checkFilePermissions(metadata, "write", file_path, req.user);
         }
 
         const stream = gcsFile.createWriteStream({
@@ -107,7 +107,7 @@ export class BucketsSrv {
             return res.status(204).json({ error: 'file not found' });
         }
         const [metadata] = await file.getMetadata();
-        BucketsSrv.checkFilePermissions(metadata, "delete", req.user);
+        await BucketsSrv.checkFilePermissions(metadata, "delete", file_path, req.user);
 
         await file.delete();
 
@@ -115,16 +115,33 @@ export class BucketsSrv {
         return res.status(200).json(response);
     }
 
-    static async checkFilePermissions(metadata: FileMetadata, action: BucketActionsType, user?: AuthenticatedUser | null) {
+    static async checkFilePermissions(
+        metadata: FileMetadata,
+        action: BucketActionsType,
+        path: string,
+        user?: AuthenticatedUser | null,
+    ) {
         const customMetadata = metadata.metadata;
+        // Surprise, the roles are mixed in the root of the user!! why?!
+        //console.log(JSON.stringify(user, null, 4));
+        const requiredRoles: string[] = [];
         if (customMetadata) {
             const { roles } = customMetadata;
-            if (roles) {
-                if (!user) {
-                    throw new NoAutorizadoException("Not allowed");
-                }
-                //console.log(JSON.stringify(user, null, 4));
-                //console.log(roles);
+            if (typeof roles == "string") {
+                const rolList = roles.split(/,;/).map(e => e.trim().toLocaleLowerCase());
+                requiredRoles.push(...rolList);
+            }
+        }
+        if (path.startsWith("superadmin")) {
+            requiredRoles.push("superadmin");
+        }
+        if (requiredRoles.length > 0) {
+            if (!user) {
+                throw new NoAutorizadoException("Not allowed");
+            }
+            const notFulfilledRoles = requiredRoles.filter(r => (user as any)[r] !== true);
+            if (notFulfilledRoles.length > 0) {
+                throw new NoAutorizadoException("Not allowed");
             }
         }
     }
@@ -170,7 +187,7 @@ export class BucketsSrv {
         // Get file metadata for content type
         const [metadata] = await file.getMetadata();
         if (req) {
-            BucketsSrv.checkFilePermissions(metadata, "read", req.user);
+            await BucketsSrv.checkFilePermissions(metadata, "read", file_path, req.user);
         }
         return { file, metadata };
     }
