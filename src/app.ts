@@ -95,6 +95,7 @@ class App {
 
         this.app.get('/admin/users', [isAuthenticated(), asyncHandler(RolesAdminSrv.pageUsers)]);
         this.app.get('/admin/user/roles', [checkRole(["superadmin"]), asyncHandler(RolesAdminSrv.listRoles)]);
+        this.app.get('/admin/user/myroles', [isAuthenticated(), asyncHandler(RolesAdminSrv.myRoles)]);
         this.app.get('/admin/user/shared_with', [isAuthenticated(), asyncHandler(RolesAdminSrv.getUsersAllowed)]);
         this.app.put('/admin/user/shared_with', [isAuthenticated(), asyncHandler(RolesAdminSrv.writeUsersAllowed)]);
         this.app.post('/admin/user/calendar/allow', [isAuthenticated(), asyncHandler(RolesAdminSrv.calendarConnect)]);

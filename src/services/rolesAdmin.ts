@@ -66,6 +66,21 @@ export class RolesAdminSrv {
         res.status(200).json(response);
     }
 
+    static async myRoles(req: AuthenticatedRequest, res: Response) {
+        const response: ApiResponse = {
+            success: true,
+            message: 'Ok',
+            data: {},
+            timestamp: new Date()
+        };
+        if (req.user) {
+            const uid = req.user.uid;
+            const userRecord = await admin.auth().getUser(uid);
+            response.data = userRecord.customClaims || {};
+        }
+        res.status(200).json(response);
+    }
+
     static async addRole(req: AuthenticatedRequest, res: Response) {
         const uid = General.readParam(req, "uid", null, true);
         const role = General.readParam(req, "role", null, true);

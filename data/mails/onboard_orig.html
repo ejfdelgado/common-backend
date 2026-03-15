@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email</title>
+
+</head>
+
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4; padding: 50px 0;">
+    <div style="margin: 0 15%;">
+        <table
+            style="margin: 0 auto; width: 100%; border: 1px solid; border-radius: 15px; border-color: rgb(181, 181, 181); background-color: aliceblue;">
+            <tbody>
+                <tr>
+                    <td colspan="2"
+                        style="padding: 40px 20px 0px 20px; background-image: url('${form.url_image}'); border-top-left-radius: 13px; border-top-right-radius: 13px; background-position: center; background-size: cover;">
+                        <h2 style="padding: 20px 0 15px 0; margin-top: 0; color: #2f2f2f;
+    text-shadow: -1px -1px 0 #fff, 0 -1px 0 #fff, 1px -1px 0 #fff, 1px 0 0 #fff,
+        1px 1px 0 #fff, 0 1px 0 #fff, -1px 1px 0 #fff, -1px 0 0 #fff; font-size: 2rem;">${form.title}</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding: 20px; color: rgb(91, 91, 91);">
+                        <p>${form.content}</p>
+                        <br />
+                        <p style="text-align: center;">
+                            <a style="color: white; background-color: black; padding: 10px 20px; text-decoration: none; border-radius: 10px; cursor: pointer;"
+                                href="${form.action.link}">${form.action.label}</a>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"
+                        style="padding: 10px 20px 20px 20px; background-color: rgb(221, 221, 221); border-bottom-left-radius: 13px; border-bottom-right-radius: 13px;">
+                        <p style="text-align: center; color: rgb(113, 113, 113); font-size: 0.9rem;">${form.footer}</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
