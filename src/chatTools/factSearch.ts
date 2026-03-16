@@ -8,13 +8,20 @@ export async function searchFact(
     assistantId: string,
     userQuery: string,
 ): Promise<ToolResponseType | null> {
-    let { factsMaxMatches, factsMinDistance } = tool;
+    let { keywords, factsMaxMatches, factsMinDistance } = tool;
     const success: boolean = true;
     let message: string | InnerToolResponseType = "";
 
     const searched: string[] = tool.args.map((arg: any) => arg.val);
 
-    const completeSearch = [...searched].join(" ");
+    const ideasList = [];
+
+    if (typeof keywords == "string" && keywords.trim().length > 0) {
+        ideasList.push(keywords);
+    }
+    ideasList.push(...searched);
+
+    const completeSearch = ideasList.filter(i => i.trim().length > 0).join(" ");
 
     if (typeof factsMinDistance == "number" && !isNaN(factsMinDistance)) {
         factsMinDistance = factsMinDistance / 100;
