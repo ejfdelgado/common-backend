@@ -8,7 +8,13 @@ import { RolesAdminSrv } from "./rolesAdmin";
 
 export class CalendarService {
 
-    static async findMeetingByType(auth: any, max: number = 3, hoursGap: number = 0, typeKeyword: string) {
+    static async findMeetingByType(
+        auth: any,
+        max: number = 3,
+        hoursGap: number = 0,
+        typeKeyword: string,
+        calendarId?: string,
+    ) {
         const calendar = google.calendar({ version: 'v3', auth });
 
         let hours = hoursGap;
@@ -18,7 +24,7 @@ export class CalendarService {
         const millis = Date.now() + (1000 * 60 * 60 * hoursGap);
         const timeMin = new Date(millis).toISOString();
         const query: any = {
-            calendarId: 'primary',
+            calendarId: typeof calendarId == "string" && calendarId.trim().length > 0 ? calendarId : 'primary',
             timeMin: timeMin,
             maxResults: max,
             singleEvents: true,
@@ -87,7 +93,7 @@ export class CalendarService {
             tool,
         } = await CalendarService.preprocessRequest(parentRawId, toolRawId, user);
 
-        const { calendarKeyword } = tool;
+        const { calendarKeyword, calendarCalendarId } = tool;
 
         let keyword = "";
         if (typeof calendarKeyword == "string") {
@@ -103,11 +109,11 @@ export class CalendarService {
             max,
             hoursGap,
             keyword,
+            calendarCalendarId,
         );
         if (!eventsFound) {
             return eventsFound;
         }
-
 
         const meetingsWithoutHost = eventsFound.filter(event => {
             if (!event.attendees) {
@@ -259,9 +265,9 @@ export class CalendarService {
                     attendees: attendees,
                 },
             });
-            return true;
+            return event;
         } else {
-            return true;
+            return event;
         }
     }
 }

@@ -1,4 +1,5 @@
 import { CalendarService } from "../services/calendar.service";
+import { MyStore } from "../services/firestore";
 import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 
 export async function modifyGuestToMeeting(
@@ -11,14 +12,26 @@ export async function modifyGuestToMeeting(
     const argEmail = tool.args.find(a => /email|correo/ig.exec(a.name) != null);
     const event = tool.args.find(a => /id|event/ig.exec(a.name) != null);
 
-    let message: string | InnerToolResponseType = "Ok";
-    let success = true;
+    let message: string | InnerToolResponseType = {
+        error: null,
+        data: null,
+        success: true,
+    };
     if (!argEmail || !event) {
-        message = "Error scheduling, try later.";
-        success = false;
+        message.error = "Incomplete information.";
+        message.success = false;
     } else {
         if (tool.action == "add") {
-            await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
+            message.data = await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
+            // Add history
+            MyStore.create(`knowledge/${assistantId}/history`, {
+                checked: false,
+                type: tool.type + "_" + tool.action,//calendar_write_guest_add
+                event: message.data,
+                userQuery,
+                desc: tool.name,
+                created: Date.now(),
+            });
         } else if (tool.action == "remove") {
             await CalendarService.removeGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
         }
@@ -28,7 +41,7 @@ export async function modifyGuestToMeeting(
         name: tool.name,
         type: tool.type,
         message,
-        success,
+        success: message.success,
         hidden: true,
     };
 }

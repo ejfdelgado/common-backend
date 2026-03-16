@@ -70,6 +70,7 @@ export interface ToolDataType extends SimpleDataType {
     args: ArgumentDataType[];
     calendarUser?: AuthenticatedUser | null,
     calendarKeyword?: string;
+    calendarCalendarId?: string;
     calendarMinHoursGap?: number;
     calendarMaxGuests?: number;
     calendarMaxEvents?: number;
