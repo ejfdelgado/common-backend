@@ -1,6 +1,6 @@
 {
   "name": "common-backend",
-  "version": "1.11.1",
+  "version": "1.11.4",
   "main": "index.js",
   "author": "",
   "license": "ISC",
@@ -13,6 +13,7 @@
     "clean": "rm -rf dist",
     "build_docker": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f Dockerfile . && npm run bip",
     "build_docker_fast": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f DockerfileFast . && npm run bip",
+    "build_docker_simple": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f DockerfileSimple . && npm run bip",
     "auth": "gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev",
     "publish": "npm run auth && docker push us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version && npm run bip",
     "run_docker": "docker run us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version"

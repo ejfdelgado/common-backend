@@ -1,0 +1,13 @@
+# Stage 2: Runtime
+FROM us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:1.11.0
+WORKDIR /app
+
+# erase all
+RUN rm -rf ./dist
+
+# copy needed files
+COPY ./dist ./dist
+
+# Expose port 8080 (Cloud Run expects this)
+EXPOSE 8080
+CMD ["node", "dist/server.js"]
