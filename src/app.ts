@@ -129,6 +129,8 @@ class App {
         this.app.get("/embed/use", [checkRole(["developer"]), asyncHandler(EmbedSrv.use)]);
 
         this.app.post("/calendar/search", [isAuthenticated(), asyncHandler(CalendarService.search)]);
+        // Temporal
+        this.app.post("/public/clients", [asyncHandler(FirestoreWeb.clientByEmail)]);
 
 
         this.app.use('*', (req: Request, res: Response) => {

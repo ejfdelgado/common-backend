@@ -140,4 +140,22 @@ export class FirestoreWeb {
         await MyStore.deleteById(collection, id);
         res.status(200).json(response);
     }
+
+    static async clientByEmail(req: AuthenticatedRequest, res: Response) {
+        const email = General.readParam(req, "email", undefined, true);
+        const response: ApiResponse = {
+            success: true,
+            message: '',
+            timestamp: new Date()
+        };
+        const doc = await MyStore.paginate(
+            "client",
+            [{ name: "email", dir: "ASC" }],
+            0,
+            1,
+            [{ key: "email", oper: "==", value: email }],
+        );
+        response.data = doc;
+        res.status(200).json(response);
+    }
 }
