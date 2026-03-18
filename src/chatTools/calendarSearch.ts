@@ -33,7 +33,7 @@ export async function calendarSearchEvent(
             data: castedEvent.map((e) => {
                 return {
                     id: e.id,
-                    date: epochTo(new Date(e.start.dateTime).getTime(), 'v5'),
+                    date: e.start.dateTime,
                     timeZone: e.start.timeZone,
                 }
             }),

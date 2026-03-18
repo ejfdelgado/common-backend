@@ -22,8 +22,11 @@ export async function modifyGuestToMeeting(
         message.success = false;
     } else {
         if (tool.action == "add") {
-            message.data = await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
+            const responseInternal = await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
             // Add history
+            const eventData = responseInternal.data;
+            const { htmlLink, start, end } = eventData;
+            message.data = { htmlLink, start, end };
             MyStore.create(`knowledge/${assistantId}/history`, {
                 checked: false,
                 type: tool.type + "_" + tool.action,//calendar_write_guest_add
