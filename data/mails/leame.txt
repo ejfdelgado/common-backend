@@ -8,5 +8,12 @@ roles: system;superadmin
 
 generate an image 1024 width and 512 height with a pixelated flat style including urban at left and rural at right landscape.
 
+${form.url_image}
 https://storage.googleapis.com/pro-ejflab-assets/images/landscape.jpg
 https://storage.googleapis.com/pro-ejflab-assets/images/letter.jpg
+
+form.url_image
+form.title
+form.content
+form.action.label
+form.footer
