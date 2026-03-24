@@ -8,7 +8,7 @@
   "scripts": {
     "bip": "ffplay /sound/finish.mp3 -nodisp -nostats -hide_banner -autoexit",
     "build": "tsc && cp -r src/assets dist/",
-    "define_project": "gcloud config set project ejfexperiments",
+    "define_project": "gcloud config set project ejfexperiments && gcloud auth application-default set-quota-project ejfexperiments",
     "dev": "npm run define_project && nodemon src/server.ts",
     "clean": "rm -rf dist",
     "build_docker": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f Dockerfile . && npm run bip",

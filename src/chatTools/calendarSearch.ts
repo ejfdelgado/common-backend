@@ -31,10 +31,12 @@ export async function calendarSearchEvent(
             error: null,
             success: true,
             data: castedEvent.map((e) => {
+                const { id, htmlLink, summary, start } = e;
                 return {
-                    id: e.id,
-                    date: e.start.dateTime,
-                    timeZone: e.start.timeZone,
+                    id,
+                    htmlLink,
+                    summary,
+                    start, //inside we have: dateTime, timeZone
                 }
             }),
         };
@@ -44,7 +46,6 @@ export async function calendarSearchEvent(
         type: tool.type,
         message,
         success,
-        events: castedEvent,
         hidden: true,
     };
 }

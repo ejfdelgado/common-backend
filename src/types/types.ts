@@ -115,7 +115,6 @@ export interface ToolResponseType {
     message: string | InnerToolResponseType;
     hidden?: boolean;
     success?: boolean;
-    events?: CalendarEventType[] | null;
 }
 
 export interface ArticleDataType extends SimpleDataType {
