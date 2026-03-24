@@ -1,13 +1,15 @@
 import { MyStore } from "../services/firestore";
 import { SupabaseSrv } from "../services/supabase";
-import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
+import { AssistantStateType, ChatToolContract, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 
-export async function searchArticle(
+const searchArticle: ChatToolContract = async (
     tool: ToolDataType,
     history: any[],
     assistantId: string,
     userQuery: string,
-): Promise<ToolResponseType | null> {
+    state: AssistantStateType,
+    author: string,
+): Promise<ToolResponseType | null> => {
     const { keywords } = tool;
     const success: boolean = true;
     let message: string | InnerToolResponseType = "";
@@ -50,4 +52,6 @@ export async function searchArticle(
         message,
         success,
     };
-}
+};
+
+export { searchArticle };

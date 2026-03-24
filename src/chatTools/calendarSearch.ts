@@ -1,13 +1,14 @@
 import { CalendarService } from "../services/calendar.service";
-import { epochTo } from "../tools/DateUtils";
-import { CalendarEventType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
+import { AssistantStateType, CalendarEventType, ChatToolContract, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 
-export async function calendarSearchEvent(
+const calendarSearchEvent: ChatToolContract = async (
     tool: ToolDataType,
     history: any[],
     assistantId: string,
     userQuery: string,
-): Promise<ToolResponseType | null> {
+    state: AssistantStateType,
+    author: string,
+): Promise<ToolResponseType | null> => {
     const events = await CalendarService.searchInternal(
         assistantId,
         tool.id,
@@ -48,4 +49,6 @@ export async function calendarSearchEvent(
         success,
         hidden: true,
     };
-}
+};
+
+export { calendarSearchEvent };

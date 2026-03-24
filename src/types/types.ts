@@ -132,3 +132,12 @@ export interface CalendarEventType {
         "timeZone": string;
     };
 }
+
+export type ChatToolContract = (
+    tool: ToolDataType,
+    history: any[],
+    assistantId: string,
+    userQuery: string,
+    state: AssistantStateType,
+    author: string,
+) => Promise<ToolResponseType | null>;

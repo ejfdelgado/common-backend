@@ -1,13 +1,15 @@
 import { CalendarService } from "../services/calendar.service";
 import { MyStore } from "../services/firestore";
-import { InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
+import { InnerToolResponseType, ToolDataType, ToolResponseType, ChatToolContract, AssistantStateType } from "../types/types";
 
-export async function modifyGuestToMeeting(
+const modifyGuestToMeeting: ChatToolContract = async (
     tool: ToolDataType,
     history: any[],
     assistantId: string,
     userQuery: string,
-): Promise<ToolResponseType | null> {
+    state: AssistantStateType,
+    author: string,
+): Promise<ToolResponseType | null> => {
 
     const argEmail = tool.args.find(a => /email|correo/ig.exec(a.name) != null);
     const event = tool.args.find(a => /id|event/ig.exec(a.name) != null);
@@ -22,7 +24,12 @@ export async function modifyGuestToMeeting(
         message.success = false;
     } else {
         if (tool.action == "add") {
-            const responseInternal = await CalendarService.addGuestToMeeting(assistantId, tool.id, event.val, argEmail.val);
+            const responseInternal = await CalendarService.addGuestToMeeting(
+                assistantId,
+                tool.id,
+                event.val,
+                argEmail.val,
+            );
             // Add history
             const eventData = responseInternal.data;
             const { htmlLink, start, end } = eventData;
@@ -31,7 +38,7 @@ export async function modifyGuestToMeeting(
                 checked: false,
                 type: tool.type + "_" + tool.action,//calendar_write_guest_add
                 event: message.data,
-                userQuery,
+                guest: argEmail.val,
                 desc: tool.name,
                 created: Date.now(),
             });
@@ -47,4 +54,6 @@ export async function modifyGuestToMeeting(
         success: message.success,
         hidden: true,
     };
-}
+};
+
+export { modifyGuestToMeeting };

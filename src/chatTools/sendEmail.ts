@@ -1,5 +1,5 @@
 import { MyTuples, SimpleObj } from "ejfdelgado-common-ts";
-import { AssistantStateType, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
+import { AssistantStateType, ChatToolContract, InnerToolResponseType, ToolDataType, ToolResponseType } from "../types/types";
 import { marked } from 'marked';
 import { randomUUID } from 'crypto';
 import { EmailHandler } from "../services/email";
@@ -20,14 +20,17 @@ export function isPrimitive(value: unknown): boolean {
     return value === null || (typeof value !== 'object' && typeof value !== 'function');
 }
 
-export async function sendEmail(
+/*
+
+*/
+const sendEmail: ChatToolContract = async (
     tool: ToolDataType,
     history: any[],
+    assistantId: string,
+    userQuery: string,
     state: AssistantStateType,
     author: string,
-    assistantId: string,
-    template: string = "mails/chat_history_orig.html",
-): Promise<ToolResponseType | null> {
+): Promise<ToolResponseType | null> => {
     // Simplify last message:
     if (history.length > 0 && history[history.length - 1].parts.length > 0) {
         let lastMessage = history[history.length - 1].parts[0].text;
@@ -58,7 +61,7 @@ export async function sendEmail(
             }
         });
 
-        let customTemplate = template;
+        let customTemplate = "mails/chat_history_orig.html";
         if (typeof tool.template == "string" && tool.template.trim().length > 0) {
             customTemplate = tool.template.trim();
         }
@@ -114,4 +117,6 @@ export async function sendEmail(
         success,
         hidden: true,
     };
-}
+};
+
+export { sendEmail };

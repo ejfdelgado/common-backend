@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse, InnerToolResponseType, ToolResponseType } from '../types/types';
+import { ApiResponse, ChatToolContract, InnerToolResponseType, ToolResponseType } from '../types/types';
 import {
     Content,
     GenerateContentResponse,
@@ -30,7 +30,16 @@ const renderer: any = {
 
 marked.use({ renderer });
 
-
+/**
+ * Tools local registry
+ */
+const TOOL_REGITRY: { [key: string]: ChatToolContract } = {
+    "mail": sendEmail,
+    "article": searchArticle,
+    "fact": searchFact,
+    "calendar_search": calendarSearchEvent,
+    "calendar_write_guest": modifyGuestToMeeting,
+};
 
 export class GeminiSrv {
 
@@ -191,16 +200,8 @@ export class GeminiSrv {
                                 }
                             });
                             try {
-                                if (tool.type == "mail") {
-                                    toolResponse = await sendEmail(tool, reportHistory, state, author, extra.assistantId);
-                                } else if (tool.type == "article") {
-                                    toolResponse = await searchArticle(tool, reportHistory, extra.assistantId, extra.q);
-                                } else if (tool.type == "fact") {
-                                    toolResponse = await searchFact(tool, reportHistory, extra.assistantId, extra.q);
-                                } else if (tool.type == "calendar_search") {
-                                    toolResponse = await calendarSearchEvent(tool, reportHistory, extra.assistantId, extra.q);
-                                } else if (tool.type == "calendar_write_guest") {
-                                    toolResponse = await modifyGuestToMeeting(tool, reportHistory, extra.assistantId, extra.q);
+                                if (tool.type in TOOL_REGITRY) {
+                                    toolResponse = await TOOL_REGITRY[tool.type](tool, reportHistory, extra.assistantId, extra.q, state, author);
                                 } else {
                                     toolResponse = {
                                         name: call.name,
