@@ -113,7 +113,7 @@ class App {
         // This is public, danger!
         this.app.post('/gemini/query', asyncHandler(GeminiSrv.generate));
         
-        this.app.get("/srv/email/invite", [asyncHandler(EmailHandler.invite)]);
+        this.app.post("/srv/email/invite", [checkRole(["superadmin"]), asyncHandler(EmailHandler.invite)]);
         this.app.post("/srv/email/send", [checkRole(["developer"]), asyncHandler(EmailHandler.send)]);
         this.app.post("/srv/email/contact_us", [asyncHandler(EmailHandler.contactUs)]);
 
