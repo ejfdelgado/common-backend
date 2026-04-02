@@ -44,10 +44,11 @@ const TOOL_REGITRY: { [key: string]: ChatToolContract } = {
 export class GeminiSrv {
 
     static async generateContent(history: any[], config: GenerateContentConfig, author: string): Promise<GenerateContentResponse> {
-        const ENV_KEY = `GEMINI_${author}`;
-        const KEY_VAL = process.env[ENV_KEY];
+        let ENV_KEY = `GEMINI_${author}`;
+        let KEY_VAL = process.env[ENV_KEY];
         if (!KEY_VAL) {
-            throw new NoAutorizadoException("Not configured");
+            ENV_KEY = `GEMINI_${process.env.DEFAULT_USER_UID}`;
+            KEY_VAL = process.env[ENV_KEY];
         }
         const client = new GoogleGenAI({ apiKey: KEY_VAL });
         if (!process.env.GEMINI_MODEL) {

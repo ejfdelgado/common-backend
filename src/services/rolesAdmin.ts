@@ -30,26 +30,33 @@ export class RolesAdminSrv {
             },
             timestamp: new Date()
         };
-
-        if (email) {
-            const userRecord = await admin.auth().getUserByEmail(email);
-            if (userRecord) {
-                response.data.list.push(userRecord);
-            }
-        } else if (phone) {
-            const userRecord = await admin.auth().getUserByPhoneNumber(phone);
-            if (userRecord) {
-                response.data.list.push(userRecord);
-            }
-        } else {
-            let result: any = null;
-            if (offset) {
-                result = await admin.auth().listUsers(limit, offset);
+        try {
+            if (email) {
+                const userRecord = await admin.auth().getUserByEmail(email);
+                if (userRecord) {
+                    response.data.list.push(userRecord);
+                }
+            } else if (phone) {
+                const userRecord = await admin.auth().getUserByPhoneNumber(phone);
+                if (userRecord) {
+                    response.data.list.push(userRecord);
+                }
             } else {
-                result = await admin.auth().listUsers(limit);
+                let result: any = null;
+                if (offset) {
+                    result = await admin.auth().listUsers(limit, offset);
+                } else {
+                    result = await admin.auth().listUsers(limit);
+                }
+                response.data.list = result.users;
+                response.data.offset = result.pageToken;
             }
-            response.data.list = result.users;
-            response.data.offset = result.pageToken;
+        } catch (err: any) {
+            if (err.code == "auth/user-not-found") {
+                // Not found, do nothing
+            } else {
+                throw err;
+            }
         }
         res.status(200).json(response);
     }
