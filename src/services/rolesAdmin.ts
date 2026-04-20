@@ -3,7 +3,7 @@ import { Response } from 'express';
 import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types/types';
 import { General } from '../tools/General';
 import { MyStore } from './firestore';
-import { NoAutorizadoException } from '../errors';
+import { CustomError, NoAutorizadoException } from '../errors';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
