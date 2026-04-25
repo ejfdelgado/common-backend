@@ -54,7 +54,11 @@ export class TemplatesSrv {
 
         // Render html
         const queryParams = `?col=${collection}&id=${id}`;
-        const url = `${process.env.REDIRECT_DOMAIN}/index.html#${pathIn}${queryParams}`;
+        let redirectDomain = process.env.REDIRECT_DOMAIN;
+        if (collection == "pug") {
+            redirectDomain = "https://pug.pais.tv";
+        }
+        const url = `${redirectDomain}/index.html#${pathIn}${queryParams}`;
 
         const data = {
             photo,
