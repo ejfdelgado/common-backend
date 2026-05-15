@@ -1,6 +1,6 @@
 import { JwtPayload } from "jsonwebtoken";
 import { Request } from "express";
-import { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
+import { DecodedIdToken } from "firebase-admin/auth";
 
 export interface ApiResponse {
     success: boolean;
