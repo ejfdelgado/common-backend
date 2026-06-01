@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
