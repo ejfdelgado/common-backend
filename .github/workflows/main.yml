@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - stg
+      - pro
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download credentials
+        run: |
+          mkdir -p credentials
+          gcloud storage cp -r gs://labs-${{ github.ref_name }}-private/github/common-backend/credentials/* credentials/
+
+
+      - name: Mock ffplay for CI
+        run: |
+          sudo tee /usr/local/bin/ffplay > /dev/null <<'EOF'
+          #!/bin/sh
+          exit 0
+          EOF
+          sudo chmod +x /usr/local/bin/ffplay
+
+      - name: Build TypeScript
+        run: npm run build_docker
+
+      - name: Build and publish
+        run: npm run publish
