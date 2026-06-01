@@ -53,8 +53,8 @@ jobs:
           EOF
           sudo chmod +x /usr/local/bin/ffplay
 
-      - name: Build TypeScript
+      - name: Build
         run: npm run build_docker
 
-      - name: Build and publish
+      - name: Publish
         run: npm run publish
