@@ -20,9 +20,6 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -31,15 +28,18 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Download credentials
+      - name: Prepare folders
         run: |
           mkdir -p credentials
+          mkdir -p .model_cache
+
+      - name: Download credentials
+        run: |
           gcloud storage cp -r gs://labs-${{ github.ref_name }}-private/github/common-backend/credentials/* credentials/
 
       - name: Download models
-        if: false
+        if: true
         run: |
-          mkdir -p .model_cache
           gcloud storage cp -r gs://labs-${{ github.ref_name }}-private/github/common-backend/.model_cache/* .model_cache/
 
       - name: Mock ffplay for CI
