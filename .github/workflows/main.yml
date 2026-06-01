@@ -37,6 +37,7 @@ jobs:
           gcloud storage cp -r gs://labs-${{ github.ref_name }}-private/github/common-backend/credentials/* credentials/
 
       - name: Download models
+        if: false
         run: |
           mkdir -p .model_cache
           gcloud storage cp -r gs://labs-${{ github.ref_name }}-private/github/common-backend/.model_cache/* .model_cache/
