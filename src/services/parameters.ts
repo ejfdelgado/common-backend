@@ -3,6 +3,7 @@ import { ApiResponse } from '../types/types';
 import { General, makeJsonToBinaryResponse } from '../tools/General';
 import NodeRSA, { EncryptionScheme } from "node-rsa";
 import JSEncrypt from 'jsencrypt';
+import { AES, enc } from 'crypto-js';
 
 export interface RsaKeyPair {
     publicKey: string;
@@ -14,27 +15,44 @@ const scheme_default: EncryptionScheme = SCHEMES[0];
 
 
 export function encryptBuffer(
+    passphrase: string,
+    publicKey: string,
     data: string,
-    keyPem: string,
 ) {
-    keyPem = keyPem.replace('\n', '');
-    const decrypt = new JSEncrypt();
-    decrypt.setPublicKey(keyPem);
-    let encriptedKey = decrypt.encrypt(data);
-    return encriptedKey;
+    publicKey = publicKey.replace('\n', '');
+    const engine = new JSEncrypt();
+    engine.setPublicKey(publicKey);
+    const encriptedPassphrase = engine.encrypt(passphrase);
+    if (!encriptedPassphrase) {
+        throw new Error("can't encrypt");
+    }
+    const aesEncrypted = AES.encrypt(data, passphrase);
+    const encryptedMessage = aesEncrypted.toString();
+    return {
+        encriptedPassphrase,
+        encryptedMessage,
+    };
 }
 
 
 export function decryptBuffer(
+    passphrase: string,
+    publickKey: string,
     data: string,
-    keyPem: string,
 ) {
-    keyPem = keyPem.replace('\n', '');
-    const decrypt = new JSEncrypt();
-    decrypt.setPrivateKey(keyPem);
-    let decriptedKey = decrypt.decrypt(data);
-    console.log(decriptedKey);
-    return decriptedKey;
+    publickKey = publickKey.replace('\n', '');
+    const engine = new JSEncrypt();
+    engine.setPublicKey(publickKey);
+    const encriptedPassphrase = engine.encrypt(passphrase);
+    if (!encriptedPassphrase) {
+        throw new Error("can't encrypt");
+    }
+    const decrypted = AES.decrypt(
+        data,
+        passphrase
+    ).toString(enc.Utf8);
+
+    return decrypted;
 }
 
 export class ParametersSrv {
@@ -45,23 +63,25 @@ export class ParametersSrv {
         if (!process.env.LOCAL_PUBLIC_KEY || !process.env.LOCAL_PRIVATE_KEY) {
             throw new Error("Miss configuration");
         }
-        const encrypted = encryptBuffer(
-            data,
+        const {
+            encriptedPassphrase,
+            encryptedMessage,
+        } = encryptBuffer(
+            pass,
             process.env.LOCAL_PUBLIC_KEY,
+            data,
         );
 
-        let decripted: string | boolean = "";
-        if (encrypted != false) {
-            decripted = decryptBuffer(
-                encrypted,
-                process.env.LOCAL_PRIVATE_KEY,
-            );
-        }
+        const decripted = decryptBuffer(
+            pass,
+            process.env.LOCAL_PUBLIC_KEY,
+            encryptedMessage,
+        );
 
         const response: ApiResponse = {
             success: true,
             message: 'Data received successfully',
-            data: { pass, data, base64: encrypted, decripted },
+            data: { pass, data, encryptedMessage, decripted, encriptedPassphrase },
             timestamp: new Date()
         };
         res.status(201).json(response);
@@ -70,12 +90,13 @@ export class ParametersSrv {
     static decrypt(req: Request, res: Response) {
         const pass = General.readParam(req, "pass", "", true);
         const data = General.readParam(req, "data", "", true);
-        if (!process.env.LOCAL_PRIVATE_KEY) {
+        if (!process.env.LOCAL_PUBLIC_KEY || !process.env.LOCAL_PRIVATE_KEY) {
             throw new Error("Miss configuration");
         }
         const decripted = decryptBuffer(
             pass,
-            process.env.LOCAL_PRIVATE_KEY,
+            process.env.LOCAL_PUBLIC_KEY,
+            data,
         );
         const response: ApiResponse = {
             success: true,

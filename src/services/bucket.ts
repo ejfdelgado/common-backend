@@ -1,9 +1,9 @@
-import crypto from 'crypto';
 import { Response } from 'express';
 import { FileMetadata, Storage, File as GFile } from "@google-cloud/storage";
 import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types/types';
 import { General } from '../tools/General';
 import { InesperadoException, NoAutorizadoException } from '../errors';
+import { AES, enc } from 'crypto-js';
 
 const storage = new Storage();
 
@@ -84,28 +84,9 @@ export class BucketsSrv {
         });
 
         if (pass) {
-            const private_key = process.env.LOCAL_PRIVATE_KEY;
-
-            // Hybrid encryption: random AES-256-GCM key encrypted with RSA public key.
-            // pass is the passphrase protecting the RSA key.
-            const aesKey = crypto.randomBytes(32);
-            const iv = crypto.randomBytes(12);
-
-            const cipher = crypto.createCipheriv('aes-256-gcm', aesKey, iv);
-            const encryptedData = Buffer.concat([cipher.update(file.buffer), cipher.final()]);
-            const authTag = cipher.getAuthTag(); // 16 bytes
-
-            const encryptedKey = crypto.privateEncrypt(
-                { key: private_key!, passphrase: pass, padding: crypto.constants.RSA_PKCS1_PADDING },
-                aesKey,
-            );
-
-            // Format: [4-byte key_len][RSA-encrypted AES key][12-byte IV][16-byte auth tag][encrypted data]
-            const keyLenBuf = Buffer.alloc(4);
-            keyLenBuf.writeUInt32BE(encryptedKey.length, 0);
-
-            const encriptedBuffer = Buffer.concat([keyLenBuf, encryptedKey, iv, authTag, encryptedData]);
-            stream.end(encriptedBuffer);
+            const wordArray = enc.Utf8.parse(file.buffer.toString('utf8'));
+            const encrypted = AES.encrypt(wordArray, pass).toString();
+            stream.end(Buffer.from(encrypted, 'utf8'));
         } else {
             stream.end(file.buffer);
         }
