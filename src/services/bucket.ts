@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Response } from 'express';
 import { FileMetadata, Storage, File as GFile } from "@google-cloud/storage";
 import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types/types';
@@ -38,6 +39,7 @@ export class BucketsSrv {
         let bucket_name: string | undefined = General.readParam(req, "bucket_name", undefined, false);
         let file_path: string = General.readParam(req, "file_path", undefined, true);
         let make_public: string = General.readParam(req, "make_public", "0", false);
+        let pass: string = General.readParam(req, "pass", null, false);
 
         const file = req.file;
 
@@ -81,7 +83,32 @@ export class BucketsSrv {
             });
         });
 
-        stream.end(file.buffer);
+        if (pass) {
+            const private_key = process.env.LOCAL_PRIVATE_KEY;
+
+            // Hybrid encryption: random AES-256-GCM key encrypted with RSA public key.
+            // pass is the passphrase protecting the RSA key.
+            const aesKey = crypto.randomBytes(32);
+            const iv = crypto.randomBytes(12);
+
+            const cipher = crypto.createCipheriv('aes-256-gcm', aesKey, iv);
+            const encryptedData = Buffer.concat([cipher.update(file.buffer), cipher.final()]);
+            const authTag = cipher.getAuthTag(); // 16 bytes
+
+            const encryptedKey = crypto.privateEncrypt(
+                { key: private_key!, passphrase: pass, padding: crypto.constants.RSA_PKCS1_PADDING },
+                aesKey,
+            );
+
+            // Format: [4-byte key_len][RSA-encrypted AES key][12-byte IV][16-byte auth tag][encrypted data]
+            const keyLenBuf = Buffer.alloc(4);
+            keyLenBuf.writeUInt32BE(encryptedKey.length, 0);
+
+            const encriptedBuffer = Buffer.concat([keyLenBuf, encryptedKey, iv, authTag, encryptedData]);
+            stream.end(encriptedBuffer);
+        } else {
+            stream.end(file.buffer);
+        }
     }
 
     static async fileExists(bucketName: string, filePath: string) {

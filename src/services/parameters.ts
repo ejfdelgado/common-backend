@@ -12,7 +12,80 @@ export interface RsaKeyPair {
 const SCHEMES: EncryptionScheme[] = ["pkcs1"];
 const scheme_default: EncryptionScheme = SCHEMES[0];
 
+
+export function encryptBuffer(
+    data: string,
+    keyPem: string,
+) {
+    keyPem = keyPem.replace('\n', '');
+    const decrypt = new JSEncrypt();
+    decrypt.setPublicKey(keyPem);
+    let encriptedKey = decrypt.encrypt(data);
+    return encriptedKey;
+}
+
+
+export function decryptBuffer(
+    data: string,
+    keyPem: string,
+) {
+    keyPem = keyPem.replace('\n', '');
+    const decrypt = new JSEncrypt();
+    decrypt.setPrivateKey(keyPem);
+    let decriptedKey = decrypt.decrypt(data);
+    console.log(decriptedKey);
+    return decriptedKey;
+}
+
 export class ParametersSrv {
+
+    static async encrypt(req: Request, res: Response) {
+        const pass = General.readParam(req, "pass", "", true);
+        const data = General.readParam(req, "data", "", true);
+        if (!process.env.LOCAL_PUBLIC_KEY || !process.env.LOCAL_PRIVATE_KEY) {
+            throw new Error("Miss configuration");
+        }
+        const encrypted = encryptBuffer(
+            data,
+            process.env.LOCAL_PUBLIC_KEY,
+        );
+
+        let decripted: string | boolean = "";
+        if (encrypted != false) {
+            decripted = decryptBuffer(
+                encrypted,
+                process.env.LOCAL_PRIVATE_KEY,
+            );
+        }
+
+        const response: ApiResponse = {
+            success: true,
+            message: 'Data received successfully',
+            data: { pass, data, base64: encrypted, decripted },
+            timestamp: new Date()
+        };
+        res.status(201).json(response);
+    }
+
+    static decrypt(req: Request, res: Response) {
+        const pass = General.readParam(req, "pass", "", true);
+        const data = General.readParam(req, "data", "", true);
+        if (!process.env.LOCAL_PRIVATE_KEY) {
+            throw new Error("Miss configuration");
+        }
+        const decripted = decryptBuffer(
+            pass,
+            process.env.LOCAL_PRIVATE_KEY,
+        );
+        const response: ApiResponse = {
+            success: true,
+            message: 'Data received successfully',
+            data: { pass, data, decripted },
+            timestamp: new Date()
+        };
+        res.status(201).json(response);
+    }
+
     static read(req: Request, res: Response) {
         const encriptedKey = General.readParam(req, "pass", "", true);
         // Decript the pass with the private key

@@ -110,6 +110,9 @@ class App {
         this.app.get('/params/generate', [checkRole(["developer"]), asyncHandler(ParametersSrv.generateKeyPair)]);
         this.app.get('/params/public_key', [asyncHandler(ParametersSrv.getPublicKey)]);
 
+        this.app.get('/params/encrypt', [asyncHandler(ParametersSrv.encrypt)]);
+        this.app.get('/params/decrypt', [asyncHandler(ParametersSrv.decrypt)]);
+
         // This is public, danger!
         this.app.post('/gemini/query', asyncHandler(GeminiSrv.generate));
         
