@@ -47,3 +47,5 @@ src/database/
 credentials/
 
 .model_cache/
+
+package-lock.json
