@@ -1,4 +1,4 @@
-import admin from 'firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
 import { AuthenticatedRequest, AuthenticatedUser } from '../types/types';
 import { NextFunction, Response } from 'express';
 import { NoAutorizadoException } from '../errors';
@@ -36,7 +36,7 @@ export async function checkRoleInternal(
     if (!userRaw) {
         return false;
     }
-    const user = await admin.auth().getUser(userRaw.uid);
+    const user = await getAuth().getUser(userRaw.uid);
     let currentClaims = user.customClaims || {};
     if (process.env.SUPERADMIN_EMAIL == user.email) {
         currentClaims["superadmin"] = true;

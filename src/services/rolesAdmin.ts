@@ -1,4 +1,4 @@
-import admin from 'firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
 import { Response } from 'express';
 import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from '../types/types';
 import { General } from '../tools/General';
@@ -32,21 +32,21 @@ export class RolesAdminSrv {
         };
         try {
             if (email) {
-                const userRecord = await admin.auth().getUserByEmail(email);
+                const userRecord = await getAuth().getUserByEmail(email);
                 if (userRecord) {
                     response.data.list.push(userRecord);
                 }
             } else if (phone) {
-                const userRecord = await admin.auth().getUserByPhoneNumber(phone);
+                const userRecord = await getAuth().getUserByPhoneNumber(phone);
                 if (userRecord) {
                     response.data.list.push(userRecord);
                 }
             } else {
                 let result: any = null;
                 if (offset) {
-                    result = await admin.auth().listUsers(limit, offset);
+                    result = await getAuth().listUsers(limit, offset);
                 } else {
-                    result = await admin.auth().listUsers(limit);
+                    result = await getAuth().listUsers(limit);
                 }
                 response.data.list = result.users;
                 response.data.offset = result.pageToken;
@@ -63,7 +63,7 @@ export class RolesAdminSrv {
 
     static async listRoles(req: AuthenticatedRequest, res: Response) {
         const uid = General.readParam(req, "uid", null, true);
-        const userRecord = await admin.auth().getUser(uid);
+        const userRecord = await getAuth().getUser(uid);
         const response: ApiResponse = {
             success: true,
             message: 'Ok',
@@ -82,7 +82,7 @@ export class RolesAdminSrv {
         };
         if (req.user) {
             const uid = req.user.uid;
-            const userRecord = await admin.auth().getUser(uid);
+            const userRecord = await getAuth().getUser(uid);
             response.data = userRecord.customClaims || {};
         }
         res.status(200).json(response);
@@ -92,11 +92,11 @@ export class RolesAdminSrv {
         const uid = General.readParam(req, "uid", null, true);
         const role = General.readParam(req, "role", null, true);
 
-        const user = await admin.auth().getUser(uid);
+        const user = await getAuth().getUser(uid);
         let currentClaims = user.customClaims || {};
         if (!currentClaims[role]) {
             currentClaims[role] = true;//Usually true, but could be a level (e.g., 'premium').
-            await admin.auth().setCustomUserClaims(uid, currentClaims);
+            await getAuth().setCustomUserClaims(uid, currentClaims);
         }
         const response: ApiResponse = {
             success: true,
@@ -111,11 +111,11 @@ export class RolesAdminSrv {
         const uid = General.readParam(req, "uid", null, true);
         const role = General.readParam(req, "role", null, true);
 
-        const user = await admin.auth().getUser(uid);
+        const user = await getAuth().getUser(uid);
         let currentClaims = user.customClaims || {};
         if (currentClaims[role]) {
             delete currentClaims[role];
-            await admin.auth().setCustomUserClaims(uid, currentClaims);
+            await getAuth().setCustomUserClaims(uid, currentClaims);
         }
         const response: ApiResponse = {
             success: true,
@@ -134,7 +134,7 @@ export class RolesAdminSrv {
         roles.forEach((rol: string) => {
             currentClaims[rol] = true;
         })
-        await admin.auth().setCustomUserClaims(uid, currentClaims);
+        await getAuth().setCustomUserClaims(uid, currentClaims);
         const response: ApiResponse = {
             success: true,
             message: 'Ok',
@@ -184,7 +184,7 @@ export class RolesAdminSrv {
         const users = [];
         for (let i = 0; i < uids.length; i++) {
             const uid = uids[i];
-            const user = await admin.auth().getUser(uid);
+            const user = await getAuth().getUser(uid);
             users.push({
                 uid,
                 displayName: user.displayName,

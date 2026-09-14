@@ -1,9 +1,10 @@
-import admin from 'firebase-admin';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { readFileSync } from 'fs';
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(
+if (!getApps().length) {
+    initializeApp({
+        credential: cert(
             JSON.parse(
                 readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_PATH!, 'utf8')
             )
@@ -11,4 +12,4 @@ if (!admin.apps.length) {
     });
 }
 
-export const firebaseAdmin = admin;
+export const firebaseAdmin = { auth: getAuth };
