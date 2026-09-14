@@ -1,6 +1,6 @@
 {
   "name": "common-backend",
-  "version": "1.13.3",
+  "version": "1.13.4",
   "main": "index.js",
   "author": "",
   "license": "ISC",
@@ -52,6 +52,11 @@
     "sharp": "^0.35.4",
     "protobufjs": "^7.6.6",
     "gaxios": "^7.3.1"
+  },
+  "allowScripts": {
+    "@google/genai": true,
+    "protobufjs": true,
+    "@firebase/util": true
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
