@@ -1,6 +1,6 @@
 {
   "name": "common-backend",
-  "version": "1.13.7",
+  "version": "1.13.8",
   "main": "index.js",
   "author": "",
   "license": "ISC",
@@ -51,7 +51,9 @@
   "overrides": {
     "sharp": "^0.35.4",
     "protobufjs": "^7.6.6",
-    "gaxios": "^7.3.1"
+    "gaxios": "^7.3.1",
+    "google-auth-library": "^10.6.1",
+    "gcp-metadata": "^8.1.2"
   },
   "allowScripts": {
     "@google/genai": true,
