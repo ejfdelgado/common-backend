@@ -5,7 +5,9 @@ import { General } from '../tools/General';
 import { InesperadoException, NoAutorizadoException } from '../errors';
 import { AES, enc } from 'crypto-js';
 
-const storage = new Storage();
+const storage = new Storage({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT,
+});
 
 export type BucketActionsType = "read" | "delete" | "write";
 
