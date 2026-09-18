@@ -36,9 +36,9 @@ jobs:
           mkdir -p credentials
           mkdir -p .model_cache
 
-      - name: Download credentials
-        run: |
-          gcloud storage cp -r gs://labs-${{ github.ref_name }}-private/github/common-backend/credentials/* credentials/
+      #- name: Download credentials
+      #  run: |
+      #    gcloud storage cp -r gs://labs-${{ github.ref_name }}-private/github/common-backend/credentials/* credentials/
 
       - name: Download models
         if: true
