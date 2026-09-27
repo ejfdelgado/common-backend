@@ -10,7 +10,7 @@ export function isAuthenticated() {
         next: NextFunction
     ) => {
         if (!req.user) {
-            return res.status(500).json({ error: 'Auth required!' });
+            return res.status(401).json({ error: 'Auth required!' });
         }
         next();
     }
