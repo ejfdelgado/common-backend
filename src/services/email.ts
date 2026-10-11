@@ -1,10 +1,14 @@
 import sgMail, { MailDataRequired } from "@sendgrid/mail";
-import { Request, Response } from 'express';
-import { General } from '../tools/General';
+import { Request, Response } from "express";
+import { General } from "../tools/General";
 import { InesperadoException } from "../errors";
 import { BucketsSrv } from "./bucket";
 import { MyTemplate, sortify } from "ejfdelgado-common-ts";
-import { ApiResponse, AuthenticatedRequest, AuthenticatedUser } from "../types/types";
+import {
+  ApiResponse,
+  AuthenticatedRequest,
+  AuthenticatedUser,
+} from "../types/types";
 import { RolesAdminSrv } from "./rolesAdmin";
 import { google } from "googleapis";
 
@@ -15,31 +19,34 @@ export interface SendRequestType {
   subject: string;
   to?: string[] | string;
   replyTo?: string;
-  gmailUser?: AuthenticatedUser | null,
+  gmailUser?: AuthenticatedUser | null;
 }
 
 export class EmailHandler {
-
   static async sendInternal(
     body: SendRequestType,
     send: boolean = false,
     req?: AuthenticatedRequest,
     waitSend: boolean = true,
-    debug: boolean = false) {
-
+    debug: boolean = false,
+  ) {
     const EMAIL_SENDER = process.env.EMAIL_SENDER;
     if (!process.env.SEND_GRID_VARIABLE || !EMAIL_SENDER) {
       throw new InesperadoException("Missconfiguration");
     }
     if (debug) {
-      console.log(`Using: SEND_GRID_VARIABLE ${JSON.stringify(process.env.SEND_GRID_VARIABLE.substring(0, 7))}...`);
+      console.log(
+        `Using: SEND_GRID_VARIABLE ${JSON.stringify(process.env.SEND_GRID_VARIABLE.substring(0, 7))}...`,
+      );
     }
-    sgMail.setApiKey(
-      process.env.SEND_GRID_VARIABLE
-    );
+    sgMail.setApiKey(process.env.SEND_GRID_VARIABLE);
     let contenido: string | null = null;
     const normalizedTemplate = body.template.replace(/^\s*\//, "");
-    contenido = await BucketsSrv.readTextFile(normalizedTemplate, body.bucketName, req);
+    contenido = await BucketsSrv.readTextFile(
+      normalizedTemplate,
+      body.bucketName,
+      req,
+    );
     if (!contenido) {
       contenido = '<body style="font-family: sans-serif;">Misconfigured</body>';
     }
@@ -51,8 +58,8 @@ export class EmailHandler {
       console.log(JSON.stringify(body.params, null, 4));
     }
     const contenidoFinal = renderer.render(
-      contenido,//template
-      body.params//params
+      contenido, //template
+      body.params, //params
     );
     let to = body.to;
     if (!to) {
@@ -89,13 +96,13 @@ export class EmailHandler {
         console.log("Using gmail sender...");
         const { auth } = await RolesAdminSrv.getOfflineAuth(body.gmailUser);
         const gmail = google.gmail({
-          version: 'v1',
-          auth: auth
+          version: "v1",
+          auth: auth,
         });
 
         let tos = msg.to;
         if (tos instanceof Array) {
-          tos = tos.join(', ');
+          tos = tos.join(", ");
         }
 
         const message = [
@@ -103,31 +110,31 @@ export class EmailHandler {
           `To: ${tos}`,
           `Subject: ${msg.subject}`,
           'Content-Type: multipart/alternative; boundary="boundary123"',
-          '',
-          '--boundary123',
+          "",
+          "--boundary123",
           'Content-Type: text/plain; charset="UTF-8"',
-          '',
-          'Plain text version',
-          '',
-          '--boundary123',
+          "",
+          "Plain text version",
+          "",
+          "--boundary123",
           'Content-Type: text/html; charset="UTF-8"',
-          '',
+          "",
           contenidoFinal,
-          '',
-          '--boundary123--'
-        ].join('\r\n')
+          "",
+          "--boundary123--",
+        ].join("\r\n");
 
         const encodedMessage = Buffer.from(message)
-          .toString('base64')
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+$/, '');
+          .toString("base64")
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
 
         const res = await gmail.users.messages.send({
-          userId: 'me',
+          userId: "me",
           requestBody: {
-            raw: encodedMessage
-          }
+            raw: encodedMessage,
+          },
         });
         //console.log(`res.status = ${res.status}`);
         //res.status;
@@ -152,16 +159,26 @@ export class EmailHandler {
     const body = General.readParam(req, "body");
     debug = General.readParam(req, "debug", "0", false) != "0";
 
-    const { msg, contenidoFinal } = await EmailHandler.sendInternal(body, false, req, true, debug);
+    const { msg, contenidoFinal } = await EmailHandler.sendInternal(
+      body,
+      false,
+      req,
+      true,
+      debug,
+    );
 
     if (debug) {
-      res.status(200).set({ 'content-type': 'text/html; charset=utf-8' }).send(contenidoFinal).end();
+      res
+        .status(200)
+        .set({ "content-type": "text/html; charset=utf-8" })
+        .send(contenidoFinal)
+        .end();
     } else {
       const answer: ApiResponse = {
         success: true,
-        message: 'Data received successfully',
+        message: "Data received successfully",
         data: null,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       try {
         answer.data = await sgMail.send(msg);
@@ -176,18 +193,23 @@ export class EmailHandler {
   static async contactUs(req: Request, res: Response) {
     const form = General.readParam(req, "form");
 
-    const response = await EmailHandler.sendInternal({
-      params: { form },
-      subject: `Contact!`,
-      template: "mails/contact_us_orig.html",
-      to: process.env.EMAIL_CONTACT_US,
-    }, true, undefined, false);
+    const response = await EmailHandler.sendInternal(
+      {
+        params: { form },
+        subject: `Contact!`,
+        template: "mails/contact_us_orig.html",
+        to: process.env.EMAIL_CONTACT_US,
+      },
+      true,
+      undefined,
+      false,
+    );
 
     const answer: ApiResponse = {
       success: true,
-      message: 'Ok',
+      message: "Ok",
       data: null,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     res.status(200).json(answer).end();
@@ -203,15 +225,21 @@ export class EmailHandler {
     domain = "https://chat.pais.tv";
 
     const form = {
-      url_image: "https://storage.googleapis.com/pro-ejflab-assets/images/landscape.jpg",
+      url_image:
+        "https://storage.googleapis.com/pro-ejflab-assets/images/landscape.jpg",
       email: email,
       title: "Hola!, te damos la bienvenida",
-      content: "Gracias por recibir la invitación al fascinante mundo de los asistentes virtuales. Hemos preparado todo para tu llegada.",
+      content:
+        "Gracias por recibir la invitación al fascinante mundo de los asistentes virtuales. Hemos preparado todo para tu llegada.",
       footer: "Términos y condiciones en revisión",
       action: {
         label: "Ingresa aquí",
-        link: domain + "/#/?ref=" + encodeURIComponent(Buffer.from(JSON.stringify({ email }))
-          .toString('base64')),
+        link:
+          domain +
+          "/#/?ref=" +
+          encodeURIComponent(
+            Buffer.from(JSON.stringify({ email })).toString("base64"),
+          ),
       },
     };
 
@@ -228,18 +256,27 @@ export class EmailHandler {
     const waitSend = true;
 
     const response = await EmailHandler.sendInternal(
-      body, send, undefined, waitSend, debug);
+      body,
+      send,
+      undefined,
+      waitSend,
+      debug,
+    );
 
     const { contenidoFinal } = response;
 
     if (debug) {
-      res.status(200).set({ 'content-type': 'text/html; charset=utf-8' }).send(contenidoFinal).end();
+      res
+        .status(200)
+        .set({ "content-type": "text/html; charset=utf-8" })
+        .send(contenidoFinal)
+        .end();
     } else {
       const answer: ApiResponse = {
         success: true,
-        message: 'Ok',
+        message: "Ok",
         data: null,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       res.status(200).json(answer).end();
