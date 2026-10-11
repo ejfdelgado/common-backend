@@ -91,6 +91,26 @@ export class RolesAdminSrv {
     res.status(200).json(response);
   }
 
+  static async addRolesByEmail(email: string, role: string | string[]) {
+    const user = await getAuth().getUserByEmail(email);
+    let currentClaims = user.customClaims || {};
+    const roles = [];
+    if (typeof role == "string") {
+      roles.push(role);
+    } else {
+      roles.push(...role);
+    }
+    let counter = 0;
+    roles.forEach((role) => {
+      if (!currentClaims[role]) {
+        currentClaims[role] = true;
+        counter++;
+      }
+    });
+    await getAuth().setCustomUserClaims(user.uid, currentClaims);
+    return counter;
+  }
+
   static async addRole(req: AuthenticatedRequest, res: Response) {
     const uid = General.readParam(req, "uid", null, true);
     const role = General.readParam(req, "role", null, true);
