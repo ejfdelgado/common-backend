@@ -282,4 +282,86 @@ export class EmailHandler {
       res.status(200).json(answer).end();
     }
   }
+
+  static async inviteBodyGame(req: Request, res: Response) {
+    const email = General.readParam(req, "email");
+    const interest = General.readParam(req, "interest");
+
+    const send = false;
+    const debug = true;
+
+    let domain = "https://localhost:4200";
+    domain = "https://move-and-learn.pais.tv";
+
+    const form = {
+      url_image:
+        "https://storage.googleapis.com/pro-ejflab-assets/images/body_game_banner.jpg",
+      email: email,
+      title: "¡Hola!",
+      content:
+        "¡Muchas gracias por tu interés en ser parte de <b>Move & Learn!</b></br></br>" +
+        "Estamos creando una nueva forma de aprender que combina <b>actividad física, videojuegos y retos educativos interactivos</b>. La idea es que niños y niñas puedan aprender mientras se mueven, exploran mundos virtuales y resuelven desafíos usando su propio cuerpo.</br></br>" +
+        "Tu participación es muy importante para ayudarnos a convertir esta idea en una experiencia divertida, intuitiva y realmente útil para el aprendizaje.</br></br>" +
+        "¿Cómo puedes ayudarnos?</br>" +
+        "<ul>" +
+        "<li>🎮 Prueba el juego: explora los niveles y cuéntanos qué te parece la experiencia.</li>" +
+        "<li>💡 Comparte tus ideas: ¿qué mundos, personajes, desafíos o temas educativos te gustaría ver</li>" +
+        "<li>🗣️ Danos tu opinión: ¿qué funciona bien? ¿Qué podríamos mejorar? ¿Qué haría que el juego fuera más divertido?</li>" +
+        "<li>🚀 Ayúdanos a innovar: si tienes ideas para nuevas mecánicas, actividades o formas de aprender jugando, ¡queremos escucharlas!</li>" +
+        "</ul>" +
+        "No necesitas ser experto en videojuegos ni en educación. Nos interesa tu perspectiva, tu creatividad y tu experiencia.</br></br>" +
+        "Cada comentario nos ayuda a construir algo mejor.</br></br>" +
+        "¡Gracias por ayudarnos a explorar nuevas formas de aprender moviéndonos!</br></br>" +
+        "<b>El equipo de Move & Learn</b>",
+      footer: "Términos y condiciones en revisión",
+      action: {
+        label: "Ingresa aquí",
+        link:
+          domain +
+          "/#/action/rooms?ref=" +
+          encodeURIComponent(
+            Buffer.from(JSON.stringify({ email })).toString("base64"),
+          ),
+      },
+    };
+
+    const body = {
+      gmailUser: {
+        uid: process.env.DEFAULT_OFFLINE_AUTH,
+      } as any,
+      params: { form },
+      subject: `Move and Learn - ¡Hola!`,
+      template: "mails/onboard_orig.html",
+      to: form.email,
+    };
+
+    const waitSend = true;
+
+    const response = await EmailHandler.sendInternal(
+      body,
+      send,
+      undefined,
+      waitSend,
+      debug,
+    );
+
+    const { contenidoFinal } = response;
+
+    if (debug) {
+      res
+        .status(200)
+        .set({ "content-type": "text/html; charset=utf-8" })
+        .send(contenidoFinal)
+        .end();
+    } else {
+      const answer: ApiResponse = {
+        success: true,
+        message: "Ok",
+        data: null,
+        timestamp: new Date(),
+      };
+
+      res.status(200).json(answer).end();
+    }
+  }
 }

@@ -120,6 +120,7 @@ class App {
         this.app.post("/srv/email/invite", [checkRole(["superadmin"]), asyncHandler(EmailHandler.invite)]);
         this.app.post("/srv/email/send", [checkRole(["developer"]), asyncHandler(EmailHandler.send)]);
         this.app.post("/srv/email/contact_us", [asyncHandler(EmailHandler.contactUs)]);
+        this.app.get("/srv/email/body_game_welcome", [asyncHandler(EmailHandler.inviteBodyGame)]);
 
         this.app.get("/supabase/check1", [asyncHandler(SupabaseSrv.check1)]);
 
