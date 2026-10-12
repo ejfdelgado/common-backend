@@ -286,7 +286,7 @@ export class EmailHandler {
   static async inviteBodyGame(req: Request, res: Response) {
     const email = General.readParam(req, "email");
     const interest = General.readParam(req, "interest");
-    const lang = General.readParam(req, "lang");
+    let lang = General.readParam(req, "lang");
 
     const waitSend = true;
     const send = true;
@@ -327,12 +327,30 @@ export class EmailHandler {
       en: {
         subject: "Move and Learn - Hello!",
         title: "Hello!",
-        content: "",
+        content:
+          "Thank you so much for your interest in being part of <b>Move & Learn!</b><br><br>" +
+          "We are creating a new way of learning that combines <b>physical activity, video games, and interactive educational challenges</b>. The idea is that children can learn while they move, explore virtual worlds, and solve challenges using their own bodies.<br><br>" +
+          "Your participation is very important in helping us turn this idea into a fun, intuitive, and truly useful learning experience.<br><br>" +
+          "How can you help us?<br>" +
+          "<ul>" +
+          "<li>🎮 Try the game: explore the levels and tell us what you think of the experience.</li>" +
+          "<li>💡 Share your ideas: what worlds, characters, challenges, or educational topics would you like to see?</li>" +
+          "<li>🗣️ Give us your feedback: what works well? What could we improve? What would make the game more fun?</li>" +
+          "<li>🚀 Help us innovate: if you have ideas for new mechanics, activities, or ways to learn through play, we want to hear them!</li>" +
+          "</ul>" +
+          "You don't need to be an expert in video games or education. We care about your perspective, your creativity, and your experience.<br><br>" +
+          "Every comment helps us build something better.<br><br>" +
+          "Thank you for helping us explore new ways to learn by moving!<br><br>" +
+          "<b>The Move & Learn team</b>",
         footer:
           '<a href="${domain}/assets/tos/move_and_learn_en.html">Terms and conditions</a>',
         cta: "Get in here",
       },
     };
+
+    if (!(lang in MULTILANGUAGE)) {
+      lang = "en";
+    }
 
     const form = {
       url_image:
