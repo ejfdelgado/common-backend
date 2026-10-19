@@ -266,7 +266,6 @@ export class GeminiSrv {
             },
             timestamp: new Date()
         };
-        //console.log(JSON.stringify(response, null, 4));
         makeJsonToEncriptedTextResponse(response, res, (decriptedKey + "a").split('').reverse().join(''));
     }
 }

@@ -385,7 +385,6 @@ export class SupabaseSrv {
         const id = General.readParam(req, "id", null, false);
         const parent = General.readParam(req, "parent", "", true);
         const q1 = General.readParam(req, "q", null, false);
-        const type = General.readParam(req, "type", null, true);
         const metadata = General.readParam(req, "metadata", {}, false);
 
         await SupabaseSrv.checkPermissions(req, parent);
@@ -408,6 +407,7 @@ export class SupabaseSrv {
             response.data.action = "delete";
             response.data.id = id;
         } else {
+            const type = General.readParam(req, "type", null, true);
             const q = preprocessSearchText(q1);
             if (!id || id.trim().length == 0) {
                 // make an insert
