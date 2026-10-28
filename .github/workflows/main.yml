@@ -35,6 +35,7 @@ jobs:
         run: |
           mkdir -p credentials
           mkdir -p .model_cache
+          mkdir -p .geoip
 
       - name: Download credentials
         run: |
