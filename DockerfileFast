@@ -11,6 +11,7 @@ COPY ./dist ./dist
 COPY ./node_modules ./node_modules
 COPY ./credentials ./credentials
 COPY ./.model_cache ./.model_cache
+COPY ./.geoip ./.geoip
 
 # Expose port 8080 (Cloud Run expects this)
 EXPOSE 8080

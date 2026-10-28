@@ -53,6 +53,9 @@ jobs:
           EOF
           sudo chmod +x /usr/local/bin/ffplay
 
+      - name: Geolocation update
+        run: npm run geoip_download
+
       - name: Build
         run: npm run build_docker
 

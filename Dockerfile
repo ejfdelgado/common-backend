@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package*.json tsconfig.json ./
 COPY ./credentials ./credentials
 COPY ./.model_cache ./.model_cache
+COPY ./.geoip ./.geoip
 RUN npm install
 COPY src ./src
 RUN npm run build
@@ -16,6 +17,7 @@ RUN npm install --only=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/credentials ./credentials
 COPY --from=builder /app/.model_cache ./.model_cache
+COPY --from=builder /app/.geoip ./.geoip
 
 # Expose port 8080 (Cloud Run expects this)
 EXPOSE 8080

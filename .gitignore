@@ -48,4 +48,6 @@ credentials/
 
 .model_cache/
 
+.geoip/
+
 package-lock.json

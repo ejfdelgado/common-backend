@@ -19,6 +19,7 @@ import { EmailHandler } from './services/email';
 import { SupabaseSrv } from './services/supabase';
 import { EmbedSrv } from './services/embeed.service';
 import { CalendarService } from './services/calendar.service';
+import { GeoIpSrv } from './services/geoip.service';
 
 let allowedOrigins = [
     'http://localhost:4200',
@@ -74,6 +75,8 @@ class App {
         this.app.get('/public/health', HealthSrv.health);
         this.app.post('/public/echo', HealthSrv.echo);
         this.app.get('/check_user', HealthSrv.checkUser);
+
+        this.app.get('/public/geoip', asyncHandler(GeoIpSrv.locate));
 
         this.app.post('/bucket/file', upload.single('file'), asyncHandler(BucketsSrv.saveFile));
         this.app.get('/bucket/file', asyncHandler(BucketsSrv.readFile));

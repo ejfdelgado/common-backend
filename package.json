@@ -1,6 +1,6 @@
 {
   "name": "common-backend",
-  "version": "1.15.1",
+  "version": "1.16.0",
   "main": "index.js",
   "author": "",
   "license": "ISC",
@@ -15,6 +15,7 @@
     "define_project": "gcloud config set project ejfexperiments && gcloud auth application-default set-quota-project ejfexperiments",
     "dev": "npm run define_project && nodemon src/server.ts",
     "clean": "rm -rf dist",
+    "geoip_download": "mkdir -p .geoip && curl -fsSL -o .geoip/city.mmdb.gz https://download.db-ip.com/free/dbip-city-lite-$(date +%Y-%m).mmdb.gz && gunzip -f .geoip/city.mmdb.gz",
     "build_docker": "docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f Dockerfile . && npm run bip",
     "build_docker_fast": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f DockerfileFast . && npm run bip",
     "build_docker_simple": "npm run build && docker build --no-cache=true -t us-central1-docker.pkg.dev/ejfexperiments/ejfexperiments/common_backend:$npm_package_version -f DockerfileSimple . && npm run bip",
@@ -42,6 +43,7 @@
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
     "marked": "^17.0.3",
+    "maxmind": "^5.0.7",
     "moment": "^2.30.1",
     "multer": "^2.0.2",
     "mysql2": "^3.16.0",
