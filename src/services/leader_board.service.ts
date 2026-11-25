@@ -12,7 +12,9 @@ const COLLECTION_MAIN = "leaderboard_actual";
 
 export class LeaderBoardSrv {
   static getRandomPicture() {
-    return ANONYMOUS_PROFILE_IMAGES[0];
+    return ANONYMOUS_PROFILE_IMAGES[
+      Math.floor(Math.random() * ANONYMOUS_PROFILE_IMAGES.length)
+    ];
   }
 
   static async write(req: AuthenticatedRequest, res: Response) {
@@ -23,11 +25,14 @@ export class LeaderBoardSrv {
       timestamp: new Date(),
     };
     const body = General.readParam(req, "body", null, true);
-    const { roomId, displayName, points } = body;
+    const { displayName, points } = body;
+    let { roomId } = body;
 
     if (!roomId) {
       throw new ParametrosIncompletosException("Missing roomId");
     }
+
+    roomId = String(roomId);
 
     if (typeof points !== "number") {
       throw new ParametrosIncompletosException("Missing points");
@@ -60,9 +65,11 @@ export class LeaderBoardSrv {
             old.points = points;
           }
 
-          if (old.user.photoURL != user.photoURL) {
+          if (user.picture && old.user.photoURL != user.picture) {
             needsUpdate = true;
-            old.user.photoURL = user.photoURL; // Refresh old photo
+            old.user.photoURL = user.picture
+              ? user.picture
+              : LeaderBoardSrv.getRandomPicture();
           }
 
           if (needsUpdate) {
@@ -79,7 +86,7 @@ export class LeaderBoardSrv {
           updated: Date.now(),
           user: {
             uid: user.uid,
-            displayName: user.name,
+            displayName: user.name || user.email?.split("@")[0] || "Player",
             isAnonymous: false,
             photoURL: user.picture
               ? user.picture
@@ -118,9 +125,16 @@ export class LeaderBoardSrv {
       data: null,
       timestamp: new Date(),
     };
-    const roomId = General.readParam(req, "roomId", null, true);
-    const limit = Math.min(parseInt(General.readParam(req, "limit", 10), 10) || 10, 100);
-    const offset = Math.max(parseInt(General.readParam(req, "offset", 0), 10) || 0, 0);
+    let roomId = General.readParam(req, "roomId", null, true);
+    roomId = String(roomId);
+    const limit = Math.min(
+      parseInt(General.readParam(req, "limit", 10), 10) || 10,
+      100,
+    );
+    const offset = Math.max(
+      parseInt(General.readParam(req, "offset", 0), 10) || 0,
+      0,
+    );
 
     answer.data = await MyStore.paginate(
       COLLECTION_MAIN,
