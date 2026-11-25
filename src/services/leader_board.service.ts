@@ -17,6 +17,12 @@ export class LeaderBoardSrv {
     ];
   }
 
+  // Firestore ids can't contain "/" (it would be read as a sub-path),
+  // so roomId is encoded; uid from Firebase Auth is already safe.
+  static loggedEntryId(roomId: string, uid: string) {
+    return `${encodeURIComponent(roomId)}_${uid}`;
+  }
+
   static async write(req: AuthenticatedRequest, res: Response) {
     const answer: ApiResponse = {
       success: true,
@@ -42,60 +48,54 @@ export class LeaderBoardSrv {
 
     if (user) {
       // loged user
-      // 1. Search an old entry with the same: roomId and user.uid
-      const oldArray = await MyStore.paginate(COLLECTION_MAIN, [], 0, 1, [
-        {
-          key: "user.uid",
-          oper: "==",
-          value: user.uid,
-        },
-        {
-          key: "roomId",
-          oper: "==",
-          value: roomId,
-        },
-      ]);
-      if (oldArray.length > 0) {
-        const old: LeaderEntryType = oldArray[0];
-        // Update if improved
-        if (old.id) {
+      // One document per (roomId, uid): the deterministic id plus the
+      // transaction make concurrent writes from the same user safe.
+      const docId = LeaderBoardSrv.loggedEntryId(roomId, user.uid);
+      await MyStore.runTransaction(async (transaction: any) => {
+        const old: LeaderEntryType | undefined = await MyStore.readById(
+          COLLECTION_MAIN,
+          docId,
+          transaction,
+        );
+        const now = Date.now();
+        if (old) {
+          // Update if improved
           let needsUpdate = false;
           if (points > old.points) {
             needsUpdate = true;
             old.points = points;
           }
 
-          if (old.user.photoURL != user.picture) {
+          // Only refresh with a real picture; never re-roll a random one
+          if (user.picture && old.user.photoURL != user.picture) {
             needsUpdate = true;
-            old.user.photoURL = user.picture
-              ? user.picture
-              : LeaderBoardSrv.getRandomPicture();
+            old.user.photoURL = user.picture;
           }
 
           if (needsUpdate) {
-            old.updated = Date.now();
+            old.updated = now;
             const { id, ...data } = old;
-            await MyStore.updateById(COLLECTION_MAIN, id, data);
+            await MyStore.updateById(COLLECTION_MAIN, docId, data, transaction);
           }
+        } else {
+          // Just create
+          const entry: LeaderEntryType = {
+            created: now,
+            points,
+            roomId,
+            updated: now,
+            user: {
+              uid: user.uid,
+              displayName: user.name || user.email?.split("@")[0] || "Player",
+              isAnonymous: false,
+              photoURL: user.picture
+                ? user.picture
+                : LeaderBoardSrv.getRandomPicture(),
+            },
+          };
+          await MyStore.createById(COLLECTION_MAIN, docId, entry, transaction);
         }
-      } else {
-        // Just create
-        const entry: LeaderEntryType = {
-          created: Date.now(),
-          points,
-          roomId,
-          updated: Date.now(),
-          user: {
-            uid: user.uid,
-            displayName: user.name || user.email?.split("@")[0] || "Player",
-            isAnonymous: false,
-            photoURL: user.picture
-              ? user.picture
-              : LeaderBoardSrv.getRandomPicture(),
-          },
-        };
-        await MyStore.create(COLLECTION_MAIN, entry);
-      }
+      });
     } else {
       // anonymous
       if (!displayName) {
