@@ -20,6 +20,7 @@ import { SupabaseSrv } from './services/supabase';
 import { EmbedSrv } from './services/embeed.service';
 import { CalendarService } from './services/calendar.service';
 import { GeoIpSrv } from './services/geoip.service';
+import { LeaderBoardSrv } from './services/leader_board.service';
 
 let allowedOrigins = [
     'http://localhost:4200',
@@ -140,6 +141,10 @@ class App {
         this.app.post("/calendar/search", [isAuthenticated(), asyncHandler(CalendarService.search)]);
         // Temporal
         this.app.post("/public/clients", [asyncHandler(FirestoreWeb.clientByEmail)]);
+
+
+        this.app.get("/leadedboard/read", [asyncHandler(LeaderBoardSrv.read)]);
+        this.app.post("/leadedboard/write", [asyncHandler(LeaderBoardSrv.write)]);
 
 
         this.app.use('*', (req: Request, res: Response) => {
