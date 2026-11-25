@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '../types/types';
-import { General, makeJsonToBinaryResponse } from '../tools/General';
+import { General, decryptClientPass, makeJsonToBinaryResponse } from '../tools/General';
 import NodeRSA, { EncryptionScheme } from "node-rsa";
 import JSEncrypt from 'jsencrypt';
 import { AES, enc } from 'crypto-js';
@@ -110,17 +110,7 @@ export class ParametersSrv {
     static read(req: Request, res: Response) {
         const encriptedKey = General.readParam(req, "pass", "", true);
         // Decript the pass with the private key
-        let privateKey = process.env.LOCAL_PRIVATE_KEY;
-        if (!privateKey) {
-            throw new Error("Missconfigured");
-        }
-        privateKey = privateKey.replace('\n', '');
-        const decrypt = new JSEncrypt();
-        decrypt.setPrivateKey(privateKey);
-        let decriptedKey = decrypt.decrypt(encriptedKey);
-        if (!decriptedKey || decriptedKey.length != 20) {
-            throw new Error("");
-        }
+        const responsePass = decryptClientPass(encriptedKey);
         const response: ApiResponse = {
             success: true,
             message: 'Data received successfully',
@@ -131,7 +121,7 @@ export class ParametersSrv {
             },
             timestamp: new Date()
         };
-        makeJsonToBinaryResponse(response, res, (decriptedKey + "a").split('').reverse().join(''));
+        makeJsonToBinaryResponse(response, res, responsePass);
     }
 
     static generateKeyPair(req: Request, res: Response) {

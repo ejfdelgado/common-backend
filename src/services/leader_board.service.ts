@@ -1,4 +1,9 @@
-import { General } from "../tools/General";
+import {
+  General,
+  decryptClientPass,
+  makeJsonToEncriptedTextResponse,
+} from "../tools/General";
+import { decode } from "@msgpack/msgpack";
 import { Request, Response } from "express";
 import { ApiResponse, AuthenticatedRequest } from "../types/types";
 import { ParametrosIncompletosException } from "../errors";
@@ -30,7 +35,13 @@ export class LeaderBoardSrv {
       data: null,
       timestamp: new Date(),
     };
-    const body = General.readParam(req, "body", null, true);
+    // Same envelope as gemini/query: msgpack-encoded JSON with an
+    // RSA-encrypted one-time pass; the response is AES-encrypted with it.
+    if (!req.body?.data) {
+      throw new ParametrosIncompletosException("Missing data");
+    }
+    const body = JSON.parse(decode(req.body.data) as string);
+    const responsePass = decryptClientPass(body.pass);
     const { displayName, points } = body;
     let { roomId } = body;
 
@@ -116,7 +127,7 @@ export class LeaderBoardSrv {
       await MyStore.create(COLLECTION_MAIN, entry);
     }
 
-    res.status(200).json(answer).end();
+    makeJsonToEncriptedTextResponse(answer, res, responsePass);
   }
 
   static async read(req: Request, res: Response) {

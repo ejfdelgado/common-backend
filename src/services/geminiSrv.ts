@@ -10,8 +10,7 @@ import {
     type GenerateContentConfig,
 } from "@google/genai";
 import { InesperadoException, NoAutorizadoException } from '../errors';
-import JSEncrypt from 'jsencrypt';
-import { makeJsonToEncriptedTextResponse } from '../tools/General';
+import { decryptClientPass, makeJsonToEncriptedTextResponse } from '../tools/General';
 import { marked } from 'marked';
 import { SupabaseSrv } from './supabase';
 import { calendarSearchEvent } from '../chatTools/calendarSearch';
@@ -109,17 +108,7 @@ export class GeminiSrv {
         const castedConfig: GenerateContentConfig = config;
         const mapedTools = GeminiSrv.mapTools(tools);
         // Decript the pass with the private key
-        let privateKey = process.env.LOCAL_PRIVATE_KEY;
-        if (!privateKey) {
-            throw new Error("Missconfigured");
-        }
-        privateKey = privateKey.replace('\n', '');
-        const decrypt = new JSEncrypt();
-        decrypt.setPrivateKey(privateKey);
-        let decriptedKey = decrypt.decrypt(pass);
-        if (!decriptedKey || decriptedKey.length != 20) {
-            throw new Error("");
-        }
+        const responsePass = decryptClientPass(pass);
 
         let retrievedFacts: string[] = [];
         let searchedResult: any[] = [];
@@ -266,6 +255,6 @@ export class GeminiSrv {
             },
             timestamp: new Date()
         };
-        makeJsonToEncriptedTextResponse(response, res, (decriptedKey + "a").split('').reverse().join(''));
+        makeJsonToEncriptedTextResponse(response, res, responsePass);
     }
 }

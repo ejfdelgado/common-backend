@@ -1,5 +1,6 @@
 import { SimpleObj } from 'ejfdelgado-common-ts';
-import { ParametrosIncompletosException } from '../errors';
+import { NoAutorizadoException, ParametrosIncompletosException } from '../errors';
+import JSEncrypt from 'jsencrypt';
 import { Request, Response, NextFunction } from "express";
 import { decode } from 'html-entities';
 import { encode } from "@msgpack/msgpack";
@@ -75,6 +76,26 @@ export function makeJsonToBinaryResponse(response: ApiResponse, res: Response, p
     const buffer = Buffer.from(encoded.buffer, encoded.byteOffset, encoded.byteLength);
     res.set('Content-Type', 'application/octet-stream');
     res.send(buffer);
+}
+
+/**
+ * Decrypts the RSA-encrypted one-time pass sent by the front end
+ * (ParamsService.getEncriptedKey) and returns the key used to AES-encrypt
+ * the response. Throws if the pass is missing or invalid.
+ */
+export function decryptClientPass(pass: string): string {
+    let privateKey = process.env.LOCAL_PRIVATE_KEY;
+    if (!privateKey) {
+        throw new Error("Missconfigured");
+    }
+    privateKey = privateKey.replace('\n', '');
+    const decrypt = new JSEncrypt();
+    decrypt.setPrivateKey(privateKey);
+    const decriptedKey = pass ? decrypt.decrypt(pass) : false;
+    if (!decriptedKey || decriptedKey.length != 20) {
+        throw new NoAutorizadoException("");
+    }
+    return (decriptedKey + "a").split('').reverse().join('');
 }
 
 export function makeJsonToEncriptedTextResponse(response: ApiResponse, res: Response, pass: string) {
