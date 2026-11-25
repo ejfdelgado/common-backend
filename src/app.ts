@@ -143,8 +143,8 @@ class App {
         this.app.post("/public/clients", [asyncHandler(FirestoreWeb.clientByEmail)]);
 
 
-        this.app.get("/leadedboard/read", [asyncHandler(LeaderBoardSrv.read)]);
-        this.app.post("/leadedboard/write", [asyncHandler(LeaderBoardSrv.write)]);
+        this.app.get("/leaderboard/read", [asyncHandler(LeaderBoardSrv.read)]);
+        this.app.post("/leaderboard/write", [asyncHandler(LeaderBoardSrv.write)]);
 
 
         this.app.use('*', (req: Request, res: Response) => {

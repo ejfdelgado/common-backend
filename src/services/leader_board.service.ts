@@ -3,11 +3,18 @@ import { Request, Response } from "express";
 import { ApiResponse, AuthenticatedRequest } from "../types/types";
 import { ParametrosIncompletosException } from "../errors";
 import { MyStore } from "./firestore";
-import { LeaderEntryType } from "../types/LeaderBoardTypes";
+import {
+  ANONYMOUS_PROFILE_IMAGES,
+  LeaderEntryType,
+} from "../types/LeaderBoardTypes";
 
 const COLLECTION_MAIN = "leaderboard_actual";
 
 export class LeaderBoardSrv {
+  static getRandomPicture() {
+    return ANONYMOUS_PROFILE_IMAGES[0];
+  }
+
   static async write(req: AuthenticatedRequest, res: Response) {
     const answer: ApiResponse = {
       success: true,
@@ -22,7 +29,7 @@ export class LeaderBoardSrv {
       throw new ParametrosIncompletosException("Missing roomId");
     }
 
-    if (typeof points == "number") {
+    if (typeof points !== "number") {
       throw new ParametrosIncompletosException("Missing points");
     }
 
@@ -71,9 +78,12 @@ export class LeaderBoardSrv {
           roomId,
           updated: Date.now(),
           user: {
-            displayName: user.displayName,
+            uid: user.uid,
+            displayName: user.name,
             isAnonymous: false,
-            photoURL: user.photoURL,
+            photoURL: user.picture
+              ? user.picture
+              : LeaderBoardSrv.getRandomPicture(),
           },
         };
         await MyStore.create(COLLECTION_MAIN, entry);
@@ -92,7 +102,7 @@ export class LeaderBoardSrv {
         user: {
           displayName,
           isAnonymous: true,
-          photoURL: "",
+          photoURL: LeaderBoardSrv.getRandomPicture(),
         },
       };
       await MyStore.create(COLLECTION_MAIN, entry);
@@ -109,8 +119,8 @@ export class LeaderBoardSrv {
       timestamp: new Date(),
     };
     const roomId = General.readParam(req, "roomId", null, true);
-    const limit = General.readParam(req, "limit", 10, false);
-    const offset = General.readParam(req, "offset", 0, false);
+    const limit = Math.min(parseInt(General.readParam(req, "limit", 10), 10) || 10, 100);
+    const offset = Math.max(parseInt(General.readParam(req, "offset", 0), 10) || 0, 0);
 
     answer.data = await MyStore.paginate(
       COLLECTION_MAIN,
