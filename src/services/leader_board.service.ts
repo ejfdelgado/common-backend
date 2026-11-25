@@ -65,7 +65,7 @@ export class LeaderBoardSrv {
             old.points = points;
           }
 
-          if (user.picture && old.user.photoURL != user.picture) {
+          if (old.user.photoURL != user.picture) {
             needsUpdate = true;
             old.user.photoURL = user.picture
               ? user.picture
@@ -74,7 +74,8 @@ export class LeaderBoardSrv {
 
           if (needsUpdate) {
             old.updated = Date.now();
-            await MyStore.updateById(COLLECTION_MAIN, old.id, old);
+            const { id, ...data } = old;
+            await MyStore.updateById(COLLECTION_MAIN, id, data);
           }
         }
       } else {
