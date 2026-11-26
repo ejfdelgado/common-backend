@@ -154,7 +154,7 @@ export class LeaderBoardSrv {
       req,
       "type",
       "ALL",
-      true,
+      false,
     );
 
     if (!["ALL", "SIGNED", "ANONYMOUS"].includes(type)) {
