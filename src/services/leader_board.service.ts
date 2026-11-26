@@ -11,7 +11,9 @@ import { MyStore } from "./firestore";
 import {
   ANONYMOUS_PROFILE_IMAGES,
   LeaderEntryType,
+  LeaderboardReadType,
 } from "../types/LeaderBoardTypes";
+import { FirestoreWhereType } from "ejfdelgado-common-ts";
 
 const COLLECTION_MAIN = "leaderboard_actual";
 
@@ -148,6 +150,38 @@ export class LeaderBoardSrv {
       0,
     );
 
+    const type: LeaderboardReadType = General.readParam(
+      req,
+      "type",
+      "ALL",
+      true,
+    );
+
+    if (!["ALL", "SIGNED", "ANONYMOUS"].includes(type)) {
+      throw new ParametrosIncompletosException("Invalid type");
+    }
+
+    const where: FirestoreWhereType[] = [
+      {
+        key: "roomId",
+        oper: "==",
+        value: roomId,
+      },
+    ];
+    if (type == "SIGNED") {
+      where.push({
+        key: "user.isAnonymous",
+        oper: "==",
+        value: false,
+      });
+    } else if (type == "ANONYMOUS") {
+      where.push({
+        key: "user.isAnonymous",
+        oper: "==",
+        value: true,
+      });
+    }
+
     answer.data = await MyStore.paginate(
       COLLECTION_MAIN,
       [
@@ -158,13 +192,7 @@ export class LeaderBoardSrv {
       ],
       offset,
       limit,
-      [
-        {
-          key: "roomId",
-          oper: "==",
-          value: roomId,
-        },
-      ],
+      where,
     );
 
     res.status(200).json(answer).end();

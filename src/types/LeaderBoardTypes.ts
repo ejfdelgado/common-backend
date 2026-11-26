@@ -30,3 +30,5 @@ export interface LeaderEntryType {
   updated: number;
   created: number;
 }
+
+export type LeaderboardReadType = "ALL" | "SIGNED" | "ANONYMOUS";
